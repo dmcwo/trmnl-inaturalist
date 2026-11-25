@@ -22,11 +22,14 @@ python build.py --lat 32.88 --lng -117.24 --radius 10
 python build.py --user dmcwo --seed 42
 ```
 
-Output lands in `out/`:
-- `trmnl.png`: the real 800x480, 2-bit file (must stay under 90,000 bytes)
-- `preview@2x.png`: enlarged copy for judging on a normal monitor
+Each run adds a file to `library/`, the published archive:
+- `library/<date>-<common-name>-<observation-id>.png`: that run's 800x480, 2-bit file (must stay under 90,000 bytes)
+- `library/latest.png`: a copy of the file above, always under this same name — point TRMNL's Alias plugin at this one, fixed URL
+- `library/index.json`: a manifest with one entry per run (observation, taxon, and full art/attribution metadata), newest first
 
-Run it repeatedly. Each run picks a new observation and adds any newly found art to `cache.json`.
+`out/preview@2x.png` is a local-only enlarged copy of the latest run, for judging on a normal monitor. `out/` is gitignored and never published.
+
+Run it repeatedly. Each run picks a new observation, archives a new file in `library/`, and adds any newly found art to `cache.json`.
 
 ## Curating
 
@@ -64,7 +67,7 @@ Put `regular.ttf`, `bold.ttf`, and `italic.ttf` in `fonts/`. The bundled files a
 
 ## Moving to GitHub Actions
 
-Once it looks right locally, push this folder to a GitHub repo, enable GitHub Pages, and keep `.github/workflows/build.yml`. It runs the same command on a schedule and publishes `out/trmnl.png`. Point the TRMNL Alias plugin at the Pages URL for that file.
+Once it looks right locally, push this folder to a GitHub repo, enable GitHub Pages, and keep `.github/workflows/build.yml`. It runs the same command on a schedule, commits the new `library/` files, and publishes them. Point the TRMNL Alias plugin at the Pages URL for `library/latest.png` — that filename never changes, only its contents do.
 
 To dry-run the workflow itself on your machine, [`act`](https://github.com/nektos/act) runs GitHub Actions locally in Docker. It's optional; running `build.py` directly covers almost everything.
 

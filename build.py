@@ -14,10 +14,13 @@ Run:  python build.py --user dmcwo
       python build.py --fixture fixtures/sample_observation.json   (no network)
 """
 import argparse
+import datetime
 import io
 import json
 import os
 import random
+import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -32,7 +35,9 @@ UA = {"User-Agent": "trmnl-inat-plates/0.1 (personal project; contact: you@examp
 
 ROOT = Path(__file__).parent
 CACHE_PATH = ROOT / "cache.json"
-OUT_DIR = ROOT / "out"
+OUT_DIR = ROOT / "out"            # local scratch (gitignored): monitor preview only
+LIBRARY_DIR = ROOT / "library"     # published archive: one PNG per run, plus latest.png
+LIBRARY_INDEX = LIBRARY_DIR / "index.json"
 
 
 # ---------------------------------------------------------------- data sources
@@ -119,7 +124,7 @@ def phylopic_silhouette(scientific_name):
     if not key:
         return None
     data = http_json("https://api.phylopic.org/resolve/gbif.org/species",
-                     {"objectIDs": key, "embed_primaryImage": "true", "build": "NaN"})
+                     {"objectIDs": key, "embed_primaryImage": "true"})
     img = data.get("_embedded", {}).get("primaryImage")
     if not img:
         return None
@@ -133,13 +138,32 @@ def phylopic_silhouette(scientific_name):
         "page": "https://www.phylopic.org/images/" + img.get("uuid", ""),
         "credit": "Silhouette via PhyloPic",
         "artist": img.get("attribution") or "",
-        "license": img.get("_links", {}).get("license", {}).get("href", ""),
+        "license": license_label(img.get("_links", {}).get("license", {}).get("href", "")),
     }
 
 
 def _strip_html(s):
-    import re
     return re.sub(r"<[^>]+>", "", s or "").strip()
+
+
+def slugify(name):
+    s = re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+    return s or "untitled"
+
+
+def license_label(value):
+    """Shorten a Creative Commons/public-domain URL to a readable label for on-screen
+    attribution. Commons already gives a short label (e.g. "Public domain"); anything
+    that isn't a URL passes through unchanged."""
+    if not value or not value.startswith("http"):
+        return value
+    m = re.search(r"creativecommons\.org/(licenses|publicdomain)/([\w-]+)/([\d.]+)", value)
+    if not m:
+        return value
+    kind, variant, version = m.groups()
+    if kind == "publicdomain":
+        return "CC0" if variant == "zero" else "Public domain"
+    return f"CC {variant.upper()} {version}"
 
 
 def find_art(obs, cache):
@@ -272,9 +296,9 @@ def compose(obs, art, art_img, matched_rank_note):
     # Bottom right: provenance of the image. Always shown; this is the point.
     if art:
         credit = art.get("credit", "")
-        bits = [b for b in (art.get("artist"), art.get("date")) if b]
-        lines = wrap(d, credit, load_font(13, italic=True), x1 - x0)[:3]
-        lines += wrap(d, " · ".join(bits), load_font(12), x1 - x0)[:1]
+        bits = [b for b in (art.get("artist"), art.get("date"), art.get("license")) if b]
+        lines = wrap(d, credit, load_font(13, italic=True), x1 - x0)[:2]
+        lines += wrap(d, " · ".join(bits), load_font(12), x1 - x0)[:2]
         if matched_rank_note:
             lines.append(matched_rank_note)
         yy = H - 28 - 16 * len(lines)
@@ -314,6 +338,7 @@ def main():
 
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
     OUT_DIR.mkdir(exist_ok=True)
+    LIBRARY_DIR.mkdir(exist_ok=True)
 
     if args.fixture:
         obs = json.loads(Path(args.fixture).read_text())
@@ -337,17 +362,51 @@ def main():
     art_img = to_four_gray(raw, (ART_W - 30, H - 40)) if raw is not None else None
     screen = compose(obs, art, art_img, note)
 
-    out = OUT_DIR / "trmnl.png"
-    size = save_2bit(screen, out)
+    # Semantically named archive file: run-date + common name + observation id,
+    # so repeated runs (or fixture tests) never collide.
+    common = obs["taxon"].get("preferred_common_name") or obs["taxon"]["name"]
+    today = datetime.date.today().isoformat()
+    filename = f"{today}-{slugify(common)}-{obs.get('id', 'fixture')}.png"
+    target = LIBRARY_DIR / filename
+
+    size = save_2bit(screen, target)
     if size > MAX_BYTES and art_img is not None:
         print(f"  {size:,} bytes is over the limit; retrying without dither")
         art_img = to_four_gray(raw, (ART_W - 30, H - 40), dither=False)
-        size = save_2bit(compose(obs, art, art_img, note), out)
-    print(f"Wrote {out} ({size:,} bytes; limit {MAX_BYTES:,})"
+        size = save_2bit(compose(obs, art, art_img, note), target)
+    print(f"Wrote {target} ({size:,} bytes; limit {MAX_BYTES:,})"
           + ("  ** STILL OVER LIMIT **" if size > MAX_BYTES else ""))
 
-    # 2x preview so you can judge it on a normal monitor
-    Image.open(out).convert("L").resize((W * 2, H * 2), Image.NEAREST).save(OUT_DIR / "preview@2x.png")
+    # Fixed, predictable filename for TRMNL's Alias plugin to point at.
+    latest = LIBRARY_DIR / "latest.png"
+    shutil.copyfile(target, latest)
+    print(f"Updated {latest}")
+
+    # 2x preview so you can judge it on a normal monitor; local only, not archived.
+    Image.open(target).convert("L").resize((W * 2, H * 2), Image.NEAREST).save(OUT_DIR / "preview@2x.png")
+
+    entries = json.loads(LIBRARY_INDEX.read_text()) if LIBRARY_INDEX.exists() else []
+    entries.insert(0, {
+        "file": filename,
+        "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
+        "bytes": size,
+        "observation": {
+            "id": obs.get("id"),
+            "observed_on": obs.get("observed_on"),
+            "place_guess": obs.get("place_guess"),
+            "observer": obs.get("user", {}).get("login"),
+        },
+        "taxon": {
+            "id": obs["taxon"]["id"],
+            "name": obs["taxon"]["name"],
+            "common_name": common,
+            "matched_id": matched,
+        },
+        "art": art,
+        "note": note,
+    })
+    LIBRARY_INDEX.write_text(json.dumps(entries, indent=2))
+
     CACHE_PATH.write_text(json.dumps(cache, indent=2))
 
 
