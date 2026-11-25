@@ -1,0 +1,13 @@
+{
+  "_note": "Test fixture. Field names follow the iNat v1 API. Ancestor IDs are not correct, but are included to test that the code can handle them.",
+  "observed_on": "2026-10-18",
+  "place_guess": "Point Loma, San Diego, CA",
+  "user": {"login": "dmcwo"},
+  "taxon": {
+    "id": 4844,
+    "name": "Pelecanus occidentalis",
+    "preferred_common_name": "Brown Pelican",
+    "rank": "species",
+    "ancestor_ids": [48460, 1, 2, 355675, 20978, 999000, 999001]
+  }
+}
