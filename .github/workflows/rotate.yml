@@ -1,0 +1,46 @@
+name: Rotate current plate
+
+# Advances library/current.png to the next curated entry (chronological round-robin;
+# see build.py --cycle). Pure local file ops - no iNat/Wikidata/Commons calls, no
+# dependencies to install, nothing here to break.
+
+on:
+  schedule:
+    # Every 20 minutes, offset from :00/:20/:40 to avoid the top-of-hour pile-up that
+    # GitHub's scheduler sees from everyone else's crons (schedules are best-effort,
+    # not exact - exact timing doesn't matter for this anyway).
+    - cron: "3,23,43 * * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rotate
+  cancel-in-progress: true
+
+jobs:
+  rotate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Pick the next plate
+        run: python3 build.py --cycle
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add library/current.png library/rotation_state.json
+          if git diff --staged --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git commit -m "Rotate current plate"
+          git pull --rebase origin main
+          git push

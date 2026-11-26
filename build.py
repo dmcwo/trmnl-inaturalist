@@ -42,6 +42,8 @@ API_CACHE_PATH = ROOT / ".api_cache.json"  # gitignored: memoized Wikidata/Commo
 OUT_DIR = ROOT / "out"            # local scratch (gitignored): monitor preview only
 LIBRARY_DIR = ROOT / "library"     # published archive: one PNG per run, plus latest.png
 LIBRARY_INDEX = LIBRARY_DIR / "index.json"
+CURRENT_PNG = LIBRARY_DIR / "current.png"       # what TRMNL's Alias plugin points at
+ROTATION_STATE = LIBRARY_DIR / "rotation_state.json"  # just {"last_shown": "<file>"}
 REVIEW_DIR = ROOT / "review"        # local scratch (gitignored): --curate's candidate sheet
 
 _session = requests.Session()  # connection keep-alive across the many lookups one run makes
@@ -550,6 +552,11 @@ def main():
                           "picks; all: also clear cache.json, for a truly blank slate. "
                           "Either way .api_cache.json (just a lookup performance cache) "
                           "is left alone. Asks to confirm, then exits.")
+    ap.add_argument("--cycle", action="store_true",
+                     help="advance library/current.png to the next eligible entry - "
+                          "chronological round-robin, skipping skip_rotation'd ones. "
+                          "No iNat/Wikidata/Commons calls; what the scheduled GitHub "
+                          "Action runs. Exits after.")
     args = ap.parse_args()
     if args.seed is not None:
         random.seed(args.seed)
@@ -565,6 +572,8 @@ def main():
         return run_curate(args)
     if args.reset:
         return run_reset(args.reset)
+    if args.cycle:
+        return run_cycle()
 
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
     OUT_DIR.mkdir(exist_ok=True)
@@ -673,6 +682,32 @@ def write_contact_sheet():
     out_path = OUT_DIR / "contact_sheet.png"
     sheet.save(out_path)
     print(f"Wrote {out_path} ({len(entries)} entries, {cols} per row)")
+
+
+def run_cycle():
+    """Advance library/current.png to the next eligible entry, chronological round-robin
+    (filenames already sort by date) so every curated entry is shown once before any
+    repeat. Newly curated entries just slot into their date position automatically.
+    Pure local file ops - no network calls, nothing to break on a schedule."""
+    entries = json.loads(LIBRARY_INDEX.read_text()) if LIBRARY_INDEX.exists() else []
+    eligible = sorted(
+        e["file"] for e in entries
+        if not e.get("skip_rotation") and (LIBRARY_DIR / e["file"]).exists()
+    )
+    if not eligible:
+        print("No eligible entries in library/ (empty, or everything is skip_rotation'd).")
+        return
+
+    state = json.loads(ROTATION_STATE.read_text()) if ROTATION_STATE.exists() else {}
+    try:
+        next_index = (eligible.index(state.get("last_shown")) + 1) % len(eligible)
+    except ValueError:
+        next_index = 0  # never shown, or that entry is gone/skip_rotation'd since
+    chosen = eligible[next_index]
+
+    shutil.copyfile(LIBRARY_DIR / chosen, CURRENT_PNG)
+    ROTATION_STATE.write_text(json.dumps({"last_shown": chosen}, indent=2))
+    print(f"Now showing {chosen} ({next_index + 1}/{len(eligible)} in rotation)")
 
 
 def run_reset(scope):

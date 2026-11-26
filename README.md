@@ -42,6 +42,7 @@ Other flags:
 - `--review`: write `out/contact_sheet.png`, a grid of every library entry, and exit — see "Batch mode"
 - `--skip <observation-id>` / `--unskip <observation-id>`: mark or unmark an entry to stay in `library/` but be left out of device rotation, and exit
 - `--reset {library,all}`: start over. `library` clears `library/` (archived files + `index.json`) so `--new`/`--curate` treat everything as unreviewed again, but keeps `cache.json`'s curated species picks, so species you've already vetted show up as the cached default again instead of needing a fresh decision. `all` also clears `cache.json`, for a genuinely blank slate. Either way, `.api_cache.json` (just a lookup performance cache, not curated content) is left alone - nothing is lost by keeping it. Asks you to confirm before deleting anything, then exits.
+- `--cycle`: advance `library/current.png` to the next eligible entry and exit — see "Rotating the displayed plate"
 
 Each run adds a file to `library/`, the published archive:
 - `library/<observed-date>-<common-name>-<observation-id>.png`: that observation's 800x480, 2-bit file (must stay under 90,000 bytes). One file per observation — the filename is the observation's own date and id, not the date you happened to run the script, so it's a stable record of that sighting and re-running over the same observations is a no-op (skipped, not duplicated; pass `--force` to redo one on purpose).
@@ -131,8 +132,16 @@ Put `regular.ttf`, `bold.ttf`, and `italic.ttf` in `fonts/`. The bundled files a
 
 Even with the photo-specific processing mode (see "Tuning the image"), not every photo comes out well — a genuinely cluttered or low-contrast shot can still look rough at 2-bit. That's exactly what `--curate` is for: compare it against the other options before committing to one.
 
-## Moving to GitHub Actions
+## Rotating the displayed plate
 
-Once it looks right locally, push this folder to a GitHub repo, enable GitHub Pages, and keep `.github/workflows/build.yml`. It runs the same command on a schedule, commits the new `library/` files, and publishes them. Point the TRMNL Alias plugin at the Pages URL for `library/latest.png` — that filename never changes, only its contents do.
+Curation (`--curate`, `--new`, etc.) needs a person at a terminal looking at candidates — it isn't something to automate. The one piece that *is* worth automating is simpler: cycling which already-curated entry is currently showing on the device.
 
-To dry-run the workflow itself on your machine, [`act`](https://github.com/nektos/act) runs GitHub Actions locally in Docker. It's optional; running `build.py` directly covers almost everything.
+`python build.py --cycle` advances `library/current.png` to the next eligible entry — chronological round-robin (filenames already sort by date), skipping anything marked `skip_rotation`. It's pure local file copying: no iNat/Wikidata/Commons calls, so it's safe to run unattended on a schedule. State lives in `library/rotation_state.json` (just the last-shown filename); newly curated entries slot into their date position automatically, no extra bookkeeping needed.
+
+`.github/workflows/rotate.yml` runs this every 20 minutes and commits `current.png` + `rotation_state.json` back to the repo if they changed. Two one-time repo settings it depends on:
+- **Pages**: Settings → Pages → Source: "Deploy from a branch" → `main` / `/ (root)`.
+- **Actions permissions**: Settings → Actions → General → Workflow permissions → "Read and write permissions" (needed so the scheduled job can push its commit; it doesn't need PR permissions, since it never opens one).
+
+Point TRMNL's Alias plugin at `https://<you>.github.io/<repo>/library/current.png` — that filename never changes, only its contents do, on whatever cadence the cron runs (independent of the device's own refresh interval; it'll just refetch the same bytes between rotations, which is fine).
+
+To dry-run the workflow itself on your machine, [`act`](https://github.com/nektos/act) runs GitHub Actions locally in Docker. It's optional; `python build.py --cycle` directly covers almost everything.
