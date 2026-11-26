@@ -11,7 +11,7 @@ on:
     # GitHub's scheduler sees from everyone else's crons (schedules are best-effort,
     # not exact - exact timing doesn't matter for this anyway).
     - cron: "3,23,43 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch: 
 
 permissions:
   contents: write
