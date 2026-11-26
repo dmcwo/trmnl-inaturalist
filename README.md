@@ -32,6 +32,8 @@ Other flags:
 - `--curate`: interactive, one observation at a time — the primary way to review and build. See "Curatorial review" below.
 - `--observation <id>`: target one specific observation directly, fetched by id from iNat, instead of picking one for you
 - `--new`: process every recent observation not already in `library/`, with whatever's already cached/found — no review, see "Batch mode" below
+- `--order {asc,desc}`: for `--new`/`--curate`/`--count`, oldest-first or newest-first (default). Newest-first is the usual day-to-day order; oldest-first is for a one-time pass through your whole collection in chronological order.
+- `--all`: with `--new`/`--curate`, fetch every matching observation (paginated past iNat's 200-per-page cap) instead of stopping at 200 - for that same one-time full-collection pass
 - `--photo`: use the observation's own photo instead of searching for historical art
 - `--no-photo-fallback`: when no historical art is found, show text-only instead of falling back to the observation's photo (the default is to fall back)
 - `--rotate {0,90,180,270}`: rotate the plate clockwise before processing — see "Curating" below
@@ -78,6 +80,12 @@ For bulk backfills where you're fine with whatever's cached or auto-found, witho
 3. Fix what's wrong the same way as below (`cache.json`, `--rotate`, `--skip`/`--unskip`), then `--force` to re-archive a specific one.
 
 This is the original ingest-then-review flow; keeping it around for fast bulk catch-up, since not every session calls for a careful look at each item.
+
+## API usage
+
+iNat's own API is already used efficiently - observations are fetched in batches of up to 200 (paginated automatically when `--all` needs more), never one call per observation, and nowhere close to its documented 60/minute, 10,000/day limits.
+
+The real repeat-call cost was Wikidata/Commons/PhyloPic during `--curate`'s "gather every candidate" step: two observations sharing a genus or family would repeat the identical lookup for that shared ancestor, every time, in every session, until something gets promoted into `cache.json`. `.api_cache.json` (gitignored - it's a performance cache, not curated content like `cache.json`) memoizes all three lookups, including misses, across every call and every session. Combined with reusing one `requests.Session()` for connection keep-alive, this is what makes frequent short `--curate` sessions (rather than one long one) cheap to run.
 
 ## Curating
 

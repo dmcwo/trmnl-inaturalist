@@ -26,6 +26,7 @@ import sys
 from pathlib import Path
 
 import numpy as np
+import requests
 from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageOps
 
 W, H = 800, 480
@@ -36,26 +37,49 @@ UA = {"User-Agent": "trmnl-inat-plates/0.1 (personal project; contact: you@examp
 
 ROOT = Path(__file__).parent
 CACHE_PATH = ROOT / "cache.json"
+API_CACHE_PATH = ROOT / ".api_cache.json"  # gitignored: memoized Wikidata/Commons/PhyloPic
+                                           # lookups, not curated content like cache.json
 OUT_DIR = ROOT / "out"            # local scratch (gitignored): monitor preview only
 LIBRARY_DIR = ROOT / "library"     # published archive: one PNG per run, plus latest.png
 LIBRARY_INDEX = LIBRARY_DIR / "index.json"
 REVIEW_DIR = ROOT / "review"        # local scratch (gitignored): --curate's candidate sheet
 
+_session = requests.Session()  # connection keep-alive across the many lookups one run makes
+
 
 # ---------------------------------------------------------------- data sources
 
 def http_json(url, params=None):
-    import requests
-    r = requests.get(url, params=params, headers=UA, timeout=20)
+    r = _session.get(url, params=params, headers=UA, timeout=20)
     r.raise_for_status()
     return r.json()
 
 
 def http_bytes(url):
-    import requests
-    r = requests.get(url, headers=UA, timeout=30)
+    r = _session.get(url, headers=UA, timeout=30)
     r.raise_for_status()
     return r.content
+
+
+_api_cache = None
+
+
+def _memoized(section, key, compute):
+    """Call compute() once per (section, key) ever, including a None result, and persist
+    immediately. A species sharing a genus or family with many others would otherwise
+    repeat the same live lookup for every single observation, in every session, until
+    one gets promoted into cache.json - and --curate runs in short sessions."""
+    global _api_cache
+    if _api_cache is None:
+        _api_cache = json.loads(API_CACHE_PATH.read_text()) if API_CACHE_PATH.exists() \
+            else {"wikidata": {}, "commons": {}, "phylopic": {}}
+    section_dict = _api_cache[section]
+    if key in section_dict:
+        return section_dict[key]
+    value = compute()
+    section_dict[key] = value
+    API_CACHE_PATH.write_text(json.dumps(_api_cache, indent=2))
+    return value
 
 
 def pick_observation(user=None, lat=None, lng=None, radius=None, days=30):
@@ -75,13 +99,23 @@ def pick_observation(user=None, lat=None, lng=None, radius=None, days=30):
     return random.choice(results)
 
 
-def pick_recent(user, count):
-    """Return the `count` most recent observations for a user, newest first, no randomness
-    (unlike pick_observation, which samples one at random from a wider recent pool)."""
-    params = {"user_login": user, "per_page": count, "order": "desc", "order_by": "observed_on",
-              "photos": "true", "rank": "species,subspecies,genus"}
-    data = http_json("https://api.inaturalist.org/v1/observations", params)
-    results = [o for o in data.get("results", []) if o.get("taxon")]
+def pick_recent(user, count, order="desc"):
+    """Return up to `count` observations, newest-first by default ("desc", matching
+    day-to-day catch-up) or oldest-first ("asc", for a one-time full-collection pass).
+    Paginates past iNat's 200-per-page cap as needed, in as few calls as possible."""
+    results = []
+    page = 1
+    while len(results) < count:
+        per_page = min(200, count - len(results))
+        params = {"user_login": user, "per_page": per_page, "page": page,
+                  "order": order, "order_by": "observed_on",
+                  "photos": "true", "rank": "species,subspecies,genus"}
+        data = http_json("https://api.inaturalist.org/v1/observations", params)
+        page_results = data.get("results", [])
+        results.extend(o for o in page_results if o.get("taxon"))
+        if len(page_results) < per_page:
+            break  # that was the last page
+        page += 1
     if not results:
         sys.exit("No observations returned.")
     return results
@@ -98,15 +132,21 @@ def taxon_chain(obs):
 
 
 def wikidata_qid_for_inat(taxon_id):
-    q = f'SELECT ?item WHERE {{ ?item wdt:P3151 "{taxon_id}" }} LIMIT 1'
-    data = http_json("https://query.wikidata.org/sparql", {"query": q, "format": "json"})
-    rows = data["results"]["bindings"]
-    return rows[0]["item"]["value"].rsplit("/", 1)[-1] if rows else None
+    def compute():
+        q = f'SELECT ?item WHERE {{ ?item wdt:P3151 "{taxon_id}" }} LIMIT 1'
+        data = http_json("https://query.wikidata.org/sparql", {"query": q, "format": "json"})
+        rows = data["results"]["bindings"]
+        return rows[0]["item"]["value"].rsplit("/", 1)[-1] if rows else None
+    return _memoized("wikidata", str(taxon_id), compute)
 
 
 def commons_illustration(qid):
     """Search Commons for files that depict the taxon and are typed as illustrations.
     Q178659 = illustration. P687 = BHL page ID (restricts to BHL-sourced files)."""
+    return _memoized("commons", qid, lambda: _commons_illustration_live(qid))
+
+
+def _commons_illustration_live(qid):
     search = f"haswbstatement:P180={qid} haswbstatement:P31=Q178659 haswbstatement:P687"
     data = http_json("https://commons.wikimedia.org/w/api.php", {
         "action": "query", "format": "json", "generator": "search",
@@ -133,6 +173,10 @@ def commons_illustration(qid):
 
 def phylopic_silhouette(scientific_name):
     """GBIF name match -> PhyloPic resolve -> primary image raster."""
+    return _memoized("phylopic", scientific_name, lambda: _phylopic_silhouette_live(scientific_name))
+
+
+def _phylopic_silhouette_live(scientific_name):
     m = http_json("https://api.gbif.org/v1/species/match", {"name": scientific_name})
     key = m.get("usageKey")
     if not key:
@@ -450,6 +494,13 @@ def main():
                           "rendered as it would look on the device, pick one, build it (--user only)")
     ap.add_argument("--observation", type=int, metavar="OBS_ID",
                      help="target one specific observation directly, fetched by id from iNat")
+    ap.add_argument("--order", choices=["asc", "desc"], default="desc",
+                     help="oldest-first (asc) or newest-first (desc, default) for "
+                          "--new/--curate/--count")
+    ap.add_argument("--all", action="store_true",
+                     help="with --new/--curate, fetch every matching observation "
+                          "(paginated) instead of capping at 200 - for a one-time "
+                          "full-collection pass")
     args = ap.parse_args()
     if args.seed is not None:
         random.seed(args.seed)
@@ -478,11 +529,11 @@ def main():
     elif args.new:
         if not args.user:
             sys.exit("--new requires --user.")
-        observations = pick_recent(args.user, 200)  # iNat's per_page cap
+        observations = pick_recent(args.user, 100_000 if args.all else 200, order=args.order)
     elif args.count > 1:
         if not args.user:
             sys.exit("--count requires --user.")
-        observations = pick_recent(args.user, args.count)
+        observations = pick_recent(args.user, args.count, order=args.order)
     elif args.user or args.lat is not None:
         observations = [pick_observation(args.user, args.lat, args.lng, args.radius)]
     else:
@@ -728,7 +779,9 @@ def run_curate(args):
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
     OUT_DIR.mkdir(exist_ok=True)
 
-    queue = [o for o in pick_recent(args.user, 200) if not (LIBRARY_DIR / library_filename(o)).exists()]
+    count = 100_000 if args.all else 200
+    queue = [o for o in pick_recent(args.user, count, order=args.order)
+             if not (LIBRARY_DIR / library_filename(o)).exists()]
     if not queue:
         print("Nothing new to review.")
         return
