@@ -1,8 +1,9 @@
 name: Rotate current plate
 
 # Advances library/current.png to the next curated entry (chronological round-robin;
-# see build.py --cycle). Pure local file ops - no iNat/Wikidata/Commons calls, no
-# dependencies to install, nothing here to break.
+# see build.py --cycle). --cycle itself makes no iNat/Wikidata/Commons calls and does
+# no image processing - but build.py still imports numpy/Pillow/requests at the top
+# of the file unconditionally, so they still need installing to run any command at all.
 
 on:
   schedule:
@@ -28,6 +29,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
+
+      - run: pip install -r requirements.txt
 
       - name: Pick the next plate
         run: python3 build.py --cycle

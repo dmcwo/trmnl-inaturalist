@@ -138,7 +138,7 @@ Curation (`--curate`, `--new`, etc.) needs a person at a terminal looking at can
 
 `python build.py --cycle` advances `library/current.png` to the next eligible entry — chronological round-robin (filenames already sort by date), skipping anything marked `skip_rotation`. It's pure local file copying: no iNat/Wikidata/Commons calls, so it's safe to run unattended on a schedule. State lives in `library/rotation_state.json` (just the last-shown filename); newly curated entries slot into their date position automatically, no extra bookkeeping needed.
 
-`.github/workflows/rotate.yml` runs this every 20 minutes and commits `current.png` + `rotation_state.json` back to the repo if they changed. Two one-time repo settings it depends on:
+`.github/workflows/rotate.yml` runs this every 20 minutes and commits `current.png` + `rotation_state.json` back to the repo if they changed. It still needs `pip install -r requirements.txt` first - `--cycle` itself does no image processing, but `build.py` imports numpy/Pillow/requests at the top of the file unconditionally, so running *any* command needs them installed. Two one-time repo settings it depends on:
 - **Pages**: Settings → Pages → Source: "Deploy from a branch" → `main` / `/ (root)`.
 - **Actions permissions**: Settings → Actions → General → Workflow permissions → "Read and write permissions" (needed so the scheduled job can push its commit; it doesn't need PR permissions, since it never opens one).
 
