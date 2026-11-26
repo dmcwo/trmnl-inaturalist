@@ -21,15 +21,21 @@ python build.py --lat 32.88 --lng -117.24 --radius 10
 # Reproducible pick while tuning
 python build.py --user dmcwo --seed 42
 
-# Backfill: the 10 most recent observations, deterministic, newest-first
+# Normal use: pick up where you left off - everything new since last time
+python build.py --user dmcwo --new
+
+# One-off backfill: a specific number of recent observations, deterministic, newest-first
 python build.py --user dmcwo --count 10
 ```
 
 Other flags:
+- `--new`: process every recent observation not already in `library/` — see "Triage workflow" below
 - `--photo`: use the observation's own photo instead of searching for historical art
 - `--no-photo-fallback`: when no historical art is found, show text-only instead of falling back to the observation's photo (the default is to fall back)
 - `--rotate {0,90,180,270}`: rotate the plate clockwise before processing — see "Curating" below
 - `--force`: reprocess an observation that's already in `library/` (normally skipped — see below)
+- `--review`: write `out/contact_sheet.png`, a grid of every library entry, and exit — see "Triage workflow"
+- `--skip <observation-id>` / `--unskip <observation-id>`: mark or unmark an entry to stay in `library/` but be left out of device rotation, and exit
 
 Each run adds a file to `library/`, the published archive:
 - `library/<observed-date>-<common-name>-<observation-id>.png`: that observation's 800x480, 2-bit file (must stay under 90,000 bytes). One file per observation — the filename is the observation's own date and id, not the date you happened to run the script, so it's a stable record of that sighting and re-running over the same observations is a no-op (skipped, not duplicated; pass `--force` to redo one on purpose).
@@ -39,6 +45,34 @@ Each run adds a file to `library/`, the published archive:
 `out/preview@2x.png` is a local-only enlarged copy of the most recently processed file, for judging on a normal monitor. `out/` is gitignored and never published. After a run, a summary lists what was added vs. skipped, with each one's art source.
 
 Run it repeatedly. Each run picks new observations, archives a file per observation in `library/`, and adds any newly found art to `cache.json`. The same species observed on different dates gets a separate entry each time (it's a record of observations, not a one-per-species gallery) — if you later want species-level aggregation (count of sightings, locations, etc.) instead of or alongside this, that's a bigger feature worth designing separately.
+
+## Triage workflow
+
+This is a curation tool, not a fire-and-forget pipeline. Expect to look at what it makes and fix the ones that are wrong. The loop:
+
+1. **Ingest what's new.**
+   ```bash
+   python build.py --user dmcwo --new
+   ```
+   This is the normal way to run it day-to-day — no need to guess a `--count`; observations already in `library/` are skipped automatically, so it only processes what's actually new. (It fetches iNat's max page size, 200, so if you're ever more than 200 observations behind, run `--count` with a larger number first.)
+
+2. **Look at everything at once.**
+   ```bash
+   python build.py --review
+   ```
+   Writes `out/contact_sheet.png` — a grid of every entry in `library/`, each labeled with its filename, common name, observation id, and art source. That's deliberately everything you'd need to go fix it: the filename is the exact string in `library/`, the observation id is what `--skip`/`--unskip` and `cache.json` lookups key on. Scan it for anything that looks wrong — sideways scans, muddy photos, solid black silhouettes, mismatched illustrations.
+
+3. **Fix what's worth fixing:**
+   - **Sideways scan** (Audubon/BHL folio plates): add `"rotate": 90` (or 180/270) to that taxon's `cache.json` entry — check it first with `--rotate 90` before saving it.
+   - **Bad or wrong art for a whole species**: edit or delete that taxon's `cache.json` entry (below).
+   - **Not worth fixing, but fine to keep on record**: `python build.py --skip <observation-id>` — keeps the entry in `library/`, just excluded from device rotation. `--unskip` reverses it.
+   - **One observation's own photo looks bad and there's no historical art to use instead**: no swap command for this yet (see "Known gaps" below).
+
+4. **Re-run to confirm a `cache.json` fix.** Reprocessing an already-archived observation is normally a no-op; add `--force` to regenerate one on purpose.
+
+### Known gaps
+
+- No command yet to target one already-known observation directly for reprocessing, or to pick a different photo than `photos[0]` if the first one looks bad. Both are natural next additions if this keeps coming up.
 
 ## Curating
 

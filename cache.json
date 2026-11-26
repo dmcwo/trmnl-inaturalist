@@ -46,5 +46,39 @@
     "credit": "Silhouette via PhyloPic",
     "artist": "Devon Hal Draedle",
     "license": "CC BY 4.0"
+  },
+  "49133": {
+    "source": "phylopic",
+    "url": "https://images.phylopic.org/images/c808be57-42d4-421b-aeb9-d1b93571416d/raster/1536x997.png",
+    "page": "https://www.phylopic.org/images/c808be57-42d4-421b-aeb9-d1b93571416d",
+    "credit": "Silhouette via PhyloPic",
+    "artist": "Wouter Koch",
+    "license": "CC0"
+  },
+  "5366": {
+    "source": "commons",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a3/Coloured_figures_of_the_birds_of_the_British_Islands_-_issued_by_Lord_Lilford_%286029171758%29.jpg/1280px-Coloured_figures_of_the_birds_of_the_British_Islands_-_issued_by_Lord_Lilford_%286029171758%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "page": "https://commons.wikimedia.org/wiki/File:Coloured_figures_of_the_birds_of_the_British_Islands_-_issued_by_Lord_Lilford_(6029171758).jpg",
+    "credit": "Coloured figures of the birds of the British Islands - issued by Lord Lilford (6029171758)",
+    "artist": "Archibald Thorburn",
+    "date": "1885",
+    "license": "Public domain",
+    "wikidata": "Q177856"
+  },
+  "180727": {
+    "source": "phylopic",
+    "url": "https://images.phylopic.org/images/5d05bcad-1cfd-45a3-a530-a17f2d43543f/raster/1536x1198.png",
+    "page": "https://www.phylopic.org/images/5d05bcad-1cfd-45a3-a530-a17f2d43543f",
+    "credit": "Silhouette via PhyloPic",
+    "artist": "Didier Descouens",
+    "license": "CC BY 4.0"
+  },
+  "147950": {
+    "source": "phylopic",
+    "url": "https://images.phylopic.org/images/3b63434f-264a-4662-bbfd-faa16f9ed1a4/raster/1536x1033.png",
+    "page": "https://www.phylopic.org/images/3b63434f-264a-4662-bbfd-faa16f9ed1a4",
+    "credit": "Silhouette via PhyloPic",
+    "artist": "",
+    "license": "CC0"
   }
 }

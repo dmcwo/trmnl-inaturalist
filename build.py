@@ -369,22 +369,42 @@ def main():
                      help="rotate the plate clockwise before processing; overrides cache.json")
     ap.add_argument("--count", type=int, default=1,
                      help="process this many of the most recent observations in one run (--user only)")
+    ap.add_argument("--new", action="store_true",
+                     help="process every recent observation not already in library/ - "
+                          "the usual way to pick up where you left off (--user only)")
     ap.add_argument("--photo", action="store_true",
                      help="use the observation's own photo instead of searching for historical art")
     ap.add_argument("--no-photo-fallback", action="store_true",
                      help="when no historical art is found, show text-only instead of the observation's photo")
     ap.add_argument("--force", action="store_true",
                      help="reprocess and overwrite an observation already in library/ (default: skip it)")
+    ap.add_argument("--review", action="store_true",
+                     help="write out/contact_sheet.png, a grid of every library entry for review, and exit")
+    ap.add_argument("--skip", type=int, metavar="OBS_ID",
+                     help="mark an archived observation to be left out of device rotation, and exit")
+    ap.add_argument("--unskip", type=int, metavar="OBS_ID",
+                     help="clear that mark for an archived observation, and exit")
     args = ap.parse_args()
     if args.seed is not None:
         random.seed(args.seed)
 
+    LIBRARY_DIR.mkdir(exist_ok=True)
+
+    if args.review:
+        return write_contact_sheet()
+    if args.skip is not None or args.unskip is not None:
+        return set_skip_rotation(args.skip if args.skip is not None else args.unskip,
+                                  skip=args.skip is not None)
+
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
     OUT_DIR.mkdir(exist_ok=True)
-    LIBRARY_DIR.mkdir(exist_ok=True)
 
     if args.fixture:
         observations = [json.loads(Path(args.fixture).read_text())]
+    elif args.new:
+        if not args.user:
+            sys.exit("--new requires --user.")
+        observations = pick_recent(args.user, 200)  # iNat's per_page cap
     elif args.count > 1:
         if not args.user:
             sys.exit("--count requires --user.")
@@ -400,6 +420,62 @@ def main():
 
     CACHE_PATH.write_text(json.dumps(cache, indent=2))
     print_summary(results)
+
+
+def write_contact_sheet():
+    """A grid of every library entry, each labeled with exactly what you'd need to find
+    and reference it: the filename (the key for --skip/cache.json lookups), the species,
+    the art source, and any flags. The single "look at everything at once" review tool."""
+    entries = json.loads(LIBRARY_INDEX.read_text()) if LIBRARY_INDEX.exists() else []
+    if not entries:
+        print("library/ is empty; nothing to review.")
+        return
+    cols = 3
+    thumb_w, thumb_h, label_h = 360, 216, 48
+    cell_w, cell_h = thumb_w, thumb_h + label_h
+    rows = -(-len(entries) // cols)
+    sheet = Image.new("L", (cell_w * cols, cell_h * rows), 255)
+    d = ImageDraw.Draw(sheet)
+    font = load_font(12)
+    for i, e in enumerate(entries):
+        r, c = divmod(i, cols)
+        x, y = c * cell_w, r * cell_h
+        path = LIBRARY_DIR / e["file"]
+        if path.exists():
+            thumb = Image.open(path).convert("L").resize((thumb_w, thumb_h), Image.NEAREST)
+            sheet.paste(thumb, (x, y))
+        else:
+            d.text((x + 8, y + 8), "(missing file)", font=font, fill=0)
+        src = e.get("art", {}).get("source") if e.get("art") else "none"
+        flags = " [skip]" if e.get("skip_rotation") else ""
+        d.rectangle([x, y, x + cell_w - 1, y + cell_h - 1], outline=170)
+        d.text((x + 4, y + thumb_h + 2), e["file"], font=font, fill=0)
+        d.text((x + 4, y + thumb_h + 22),
+                f"{e['taxon']['common_name']} - obs {e['observation']['id']} - {src}{flags}",
+                font=font, fill=85)
+    OUT_DIR.mkdir(exist_ok=True)
+    out_path = OUT_DIR / "contact_sheet.png"
+    sheet.save(out_path)
+    print(f"Wrote {out_path} ({len(entries)} entries, {cols} per row)")
+
+
+def set_skip_rotation(obs_id, skip):
+    """Mark (or clear) a library entry to be excluded from device rotation, without
+    deleting it - for entries that aren't worth fixing but are fine to keep on record."""
+    entries = json.loads(LIBRARY_INDEX.read_text()) if LIBRARY_INDEX.exists() else []
+    matches = [e for e in entries if e["observation"]["id"] == obs_id]
+    if not matches:
+        print(f"No library entry found for observation {obs_id}.")
+        return
+    for e in matches:
+        if skip:
+            e["skip_rotation"] = True
+        else:
+            e.pop("skip_rotation", None)
+    LIBRARY_INDEX.write_text(json.dumps(entries, indent=2))
+    verb = "Marked" if skip else "Cleared"
+    for e in matches:
+        print(f"{verb} skip_rotation on {e['file']}")
 
 
 def print_summary(results):
