@@ -8,7 +8,7 @@ name: Canary (schedule test)
 on:
   schedule:
     - cron: "*/10 * * * *"
-  workflow_dispatch: {}
+  workflow_dispatch: 
 
 jobs:
   ping:
