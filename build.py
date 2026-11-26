@@ -705,14 +705,18 @@ def process_observation(obs, cache, args):
     return build_and_archive(obs, art, matched, cache, args)
 
 
-def build_and_archive(obs, art, matched, cache, args, layout=None):
+def build_and_archive(obs, art, matched, cache, args, layout=None, rotate_override=None):
     """Given a chosen art candidate (or None), render the final screen, save it to
     library/, update latest.png and index.json. Shared by the normal batch flow
     (process_observation) and --curate, once the curator has picked a candidate.
     layout defaults to args.layout ("left") unless --curate's per-observation l/r
-    override passed one in explicitly."""
+    override passed one in explicitly. rotate_override folds into the art dict itself
+    (same field cache.json already uses), so a Commons/PhyloPic fix promotes to that
+    species' cache entry through the same path an automatic pick does."""
     if layout is None:
         layout = getattr(args, "layout", "left")
+    if art and rotate_override is not None:
+        art = {**art, "rotate": rotate_override}
     common = obs["taxon"].get("preferred_common_name") or obs["taxon"]["name"]
     filename = library_filename(obs)
     target = LIBRARY_DIR / filename
@@ -828,43 +832,68 @@ def run_curate(args):
             print(f"    [{n}] {cand['label']}{star}")
 
         # Invalid input re-prompts for this same observation - never silently abandons it.
-        # A trailing l/r sets the image side for just this one, e.g. "2r" or "r" (default
-        # candidate, right-side plate) - no separate step, it rides on the same answer.
-        picked, quit_now, layout = None, False, None
+        # Space-separated tokens in any order: a candidate number, l/r for image side,
+        # and/or a rotation (90/180/270, or 0 to cancel one) - e.g. "2 r 90", or just "90"
+        # alone to rotate the default pick. No separate step; it rides on the same answer.
+        picked, quit_now, layout, rotate_override = None, False, None, None
         while picked is None and not quit_now:
             raw = input(f"  Pick 1-{len(candidates)} (Enter = default, s = skip, q = quit; "
-                        f"add l/r for image side, e.g. '2r'): ").strip().lower()
-            choice, layout = raw, None
-            if raw[-1:] in ("l", "r"):
-                layout = {"l": "left", "r": "right"}[raw[-1]]
-                choice = raw[:-1]
-            if choice == "q":
+                        f"add l/r for side, 90/180/270 to rotate, e.g. '2 r 90'): ").strip().lower()
+            command, num_token, layout, rotate_override, invalid = None, None, None, None, False
+            for tok in raw.split():
+                if tok in ("q", "s"):
+                    command = tok
+                elif tok in ("l", "r"):
+                    layout = {"l": "left", "r": "right"}[tok]
+                elif tok in ("0", "90", "180", "270"):
+                    rotate_override = int(tok)
+                elif tok.isdigit():
+                    num_token = tok
+                else:
+                    invalid = True
+            if invalid or (command and (num_token or layout or rotate_override is not None)):
+                print(f"  Not a valid choice - pick 1-{len(candidates)}, s, or q "
+                      f"(optionally with l/r and/or a rotation).")
+            elif command == "q":
                 quit_now = True
-            elif choice == "s":
+            elif command == "s":
                 skipped += 1
                 picked = "skip"
-            elif choice == "":
+            elif num_token is None:
                 picked = next((c for c in candidates if c.get("default")), candidates[0])
             else:
                 try:
-                    picked = candidates[int(choice) - 1]
-                except (ValueError, IndexError):
-                    print(f"  Not a valid choice - pick 1-{len(candidates)}, s, or q (optionally with l/r).")
-                    picked = None
+                    picked = candidates[int(num_token) - 1]
+                except IndexError:
+                    print(f"  Not a valid choice - pick 1-{len(candidates)}, s, or q "
+                          f"(optionally with l/r and/or a rotation).")
         if quit_now:
             break
         if picked == "skip":
             continue
 
-        result = build_and_archive(obs, picked["art"], picked["matched"], cache, args, layout=layout)
-        print(f"  -> {result['file']}  ({result['art_source']}, {layout or args.layout} layout)\n")
+        result = build_and_archive(obs, picked["art"], picked["matched"], cache, args,
+                                    layout=layout, rotate_override=rotate_override)
+        used_layout = layout or args.layout
+        used_rotate = rotate_override if rotate_override is not None else ((picked["art"] or {}).get("rotate") or 0)
+        print(f"  -> {result['file']}  ({result['art_source']}, {used_layout} layout"
+              + (f", rotated {used_rotate}" if used_rotate else "") + ")\n")
         built += 1
 
         action = None
         while action not in ("n", "q"):
-            action = input("  [n]ext, [r]eview this one, [q]uit: ").strip().lower()
+            action = input("  [n]ext, [r]eview this one, [o]rient (rotate), [q]uit: ").strip().lower()
             if action == "r":
                 reveal(OUT_DIR / "preview@2x.png")
+            elif action == "o":
+                rot_raw = input("    Rotate to 0/90/180/270: ").strip()
+                if rot_raw in ("0", "90", "180", "270"):
+                    rotate_override = int(rot_raw)
+                    result = build_and_archive(obs, picked["art"], picked["matched"], cache, args,
+                                                layout=layout, rotate_override=rotate_override)
+                    print(f"  -> rebuilt {result['file']} rotated {rotate_override}\n")
+                else:
+                    print("    Not a valid rotation - 0, 90, 180, or 270.")
         if action == "q":
             break
 
