@@ -37,6 +37,7 @@ Other flags:
 - `--photo`: use the observation's own photo instead of searching for historical art
 - `--no-photo-fallback`: when no historical art is found, show text-only instead of falling back to the observation's photo (the default is to fall back)
 - `--rotate {0,90,180,270}`: rotate the plate clockwise before processing — see "Curating" below
+- `--layout {left,right}`: which side the plate appears on (default left). In `--curate`, override it per observation instead - see "Curatorial review"
 - `--force`: reprocess an observation that's already in `library/` (normally skipped — see below)
 - `--review`: write `out/contact_sheet.png`, a grid of every library entry, and exit — see "Batch mode"
 - `--skip <observation-id>` / `--unskip <observation-id>`: mark or unmark an entry to stay in `library/` but be left out of device rotation, and exit
@@ -61,7 +62,7 @@ python build.py --curate --user dmcwo
 Each round:
 1. It picks the next observation not already in `library/` (same underlying queue as `--new`, consumed one at a time) and gathers *every* available art option: your iNat photo, a Commons illustration at the species/genus/family level if one exists, a PhyloPic silhouette if one exists, and your previously cached pick for that species if there is one.
 2. It writes `review/candidates.png` — one row of every option, art-only (no metadata panel; that's identical no matter which image wins, so drawing it per-candidate would be wasted work), each run through the *real* processing pipeline and labeled with a menu number. The first round auto-opens it; after that, **Quick Look it again with spacebar in Finder** rather than reopening in Preview — Preview doesn't reliably notice the file changed underneath it, Quick Look always re-reads from disk.
-3. You pick a number in the terminal. Enter accepts the default (your cached pick if there is one, otherwise whatever's listed first). `s` skips the observation for next time; `q` quits the session.
+3. You pick a number in the terminal. Enter accepts the default (your cached pick if there is one, otherwise whatever's listed first). `s` skips the observation for next time; `q` quits the session. Add `l` or `r` to put the plate on that side for just this one - e.g. `2r`, or `r` alone to take the default pick with the plate on the right (handy when a subject faces right and reads better with text on the other side). No separate step; it rides on the same answer. Leave it off and it uses `--layout` (default left).
 4. It builds the full composed screen from your pick and archives it, exactly like the batch flow. Picking a Commons/PhyloPic option also promotes it to that species' cache default (next time, every observation of that species pre-selects it, cached-pick-and-all — still overridable per observation). A photo or local file is this sighting's own, so it isn't promoted.
 5. `[n]ext`, `[r]eview this one` (opens the finished screen, with its text, as a last look — press it again as many times as you want), or `[q]uit`.
 

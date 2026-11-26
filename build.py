@@ -390,22 +390,30 @@ def wrap(draw, text, font, width):
     return lines
 
 
-def compose(obs, art, art_img, matched_rank_note):
+def compose(obs, art, art_img, matched_rank_note, layout="left"):
+    """layout="left" (default) puts the plate on the left, text on the right; "right"
+    mirrors it - handy when a plate's subject faces right and reads better with the
+    text on the other side."""
     screen = Image.new("L", (W, H), 255)
     d = ImageDraw.Draw(screen)
 
-    # Left: the plate (or a quiet placeholder)
+    if layout == "right":
+        art_x0, text_x0, text_x1, divider_x = W - ART_W, 24, W - ART_W - 34, W - ART_W - 14
+    else:
+        art_x0, text_x0, text_x1, divider_x = 0, ART_W + 34, W - 24, ART_W + 14
+
+    # The plate (or a quiet placeholder)
     if art_img is not None:
-        x = (ART_W - art_img.width) // 2
+        x = art_x0 + (ART_W - art_img.width) // 2
         y = (H - art_img.height) // 2
         screen.paste(art_img, (x, y))
     else:
-        d.text((40, H // 2), "no plate found", font=load_font(18, italic=True), fill=170)
-    d.line([(ART_W + 14, 30), (ART_W + 14, H - 30)], fill=85, width=1)
+        d.text((art_x0 + 40, H // 2), "no plate found", font=load_font(18, italic=True), fill=170)
+    d.line([(divider_x, 30), (divider_x, H - 30)], fill=85, width=1)
 
-    # Right: observation metadata
+    # Observation metadata
     t = obs["taxon"]
-    x0, x1 = ART_W + 34, W - 24
+    x0, x1 = text_x0, text_x1
     y = 36
     common = (t.get("preferred_common_name") or t["name"]).title()
     for line in wrap(d, common, load_font(30, bold=True), x1 - x0):
@@ -472,6 +480,9 @@ def main():
     ap.add_argument("--seed", type=int)
     ap.add_argument("--rotate", type=int, choices=[0, 90, 180, 270],
                      help="rotate the plate clockwise before processing; overrides cache.json")
+    ap.add_argument("--layout", choices=["left", "right"], default="left",
+                     help="which side the plate appears on (default left); in --curate, "
+                          "append l/r to your pick instead, e.g. '2r'")
     ap.add_argument("--count", type=int, default=1,
                      help="process this many of the most recent observations in one run (--user only)")
     ap.add_argument("--new", action="store_true",
@@ -694,10 +705,14 @@ def process_observation(obs, cache, args):
     return build_and_archive(obs, art, matched, cache, args)
 
 
-def build_and_archive(obs, art, matched, cache, args):
+def build_and_archive(obs, art, matched, cache, args, layout=None):
     """Given a chosen art candidate (or None), render the final screen, save it to
     library/, update latest.png and index.json. Shared by the normal batch flow
-    (process_observation) and --curate, once the curator has picked a candidate."""
+    (process_observation) and --curate, once the curator has picked a candidate.
+    layout defaults to args.layout ("left") unless --curate's per-observation l/r
+    override passed one in explicitly."""
+    if layout is None:
+        layout = getattr(args, "layout", "left")
     common = obs["taxon"].get("preferred_common_name") or obs["taxon"]["name"]
     filename = library_filename(obs)
     target = LIBRARY_DIR / filename
@@ -721,13 +736,13 @@ def build_and_archive(obs, art, matched, cache, args):
 
     mode = "photo" if art and art.get("source") == "inat" else "line_art"
     art_img = to_four_gray(raw, (ART_W - 30, H - 40), mode=mode) if raw is not None else None
-    screen = compose(obs, art, art_img, note)
+    screen = compose(obs, art, art_img, note, layout=layout)
 
     size = save_2bit(screen, target)
     if size > MAX_BYTES and art_img is not None:
         print(f"  {size:,} bytes is over the limit; retrying without dither")
         art_img = to_four_gray(raw, (ART_W - 30, H - 40), mode=mode, dither=False)
-        size = save_2bit(compose(obs, art, art_img, note), target)
+        size = save_2bit(compose(obs, art, art_img, note, layout=layout), target)
     print(f"Wrote {target} ({size:,} bytes; limit {MAX_BYTES:,})"
           + ("  ** STILL OVER LIMIT **" if size > MAX_BYTES else ""))
 
@@ -765,6 +780,7 @@ def build_and_archive(obs, art, matched, cache, args):
         },
         "art": art,
         "note": note,
+        "layout": layout,
     })
     LIBRARY_INDEX.write_text(json.dumps(entries, indent=2))
 
@@ -812,9 +828,16 @@ def run_curate(args):
             print(f"    [{n}] {cand['label']}{star}")
 
         # Invalid input re-prompts for this same observation - never silently abandons it.
-        picked, quit_now = None, False
+        # A trailing l/r sets the image side for just this one, e.g. "2r" or "r" (default
+        # candidate, right-side plate) - no separate step, it rides on the same answer.
+        picked, quit_now, layout = None, False, None
         while picked is None and not quit_now:
-            choice = input(f"  Pick 1-{len(candidates)} (Enter = default, s = skip, q = quit): ").strip().lower()
+            raw = input(f"  Pick 1-{len(candidates)} (Enter = default, s = skip, q = quit; "
+                        f"add l/r for image side, e.g. '2r'): ").strip().lower()
+            choice, layout = raw, None
+            if raw[-1:] in ("l", "r"):
+                layout = {"l": "left", "r": "right"}[raw[-1]]
+                choice = raw[:-1]
             if choice == "q":
                 quit_now = True
             elif choice == "s":
@@ -826,15 +849,15 @@ def run_curate(args):
                 try:
                     picked = candidates[int(choice) - 1]
                 except (ValueError, IndexError):
-                    print(f"  Not a valid choice - pick 1-{len(candidates)}, s, or q.")
+                    print(f"  Not a valid choice - pick 1-{len(candidates)}, s, or q (optionally with l/r).")
                     picked = None
         if quit_now:
             break
         if picked == "skip":
             continue
 
-        result = build_and_archive(obs, picked["art"], picked["matched"], cache, args)
-        print(f"  -> {result['file']}  ({result['art_source']})\n")
+        result = build_and_archive(obs, picked["art"], picked["matched"], cache, args, layout=layout)
+        print(f"  -> {result['file']}  ({result['art_source']}, {layout or args.layout} layout)\n")
         built += 1
 
         action = None
