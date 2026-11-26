@@ -21,6 +21,7 @@ import os
 import random
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -38,6 +39,7 @@ CACHE_PATH = ROOT / "cache.json"
 OUT_DIR = ROOT / "out"            # local scratch (gitignored): monitor preview only
 LIBRARY_DIR = ROOT / "library"     # published archive: one PNG per run, plus latest.png
 LIBRARY_INDEX = LIBRARY_DIR / "index.json"
+REVIEW_DIR = ROOT / "review"        # local scratch (gitignored): --curate's candidate sheet
 
 
 # ---------------------------------------------------------------- data sources
@@ -221,29 +223,88 @@ def find_art(obs, cache):
     return None, None
 
 
+def find_all_art_candidates(obs, cache):
+    """Unlike find_art (which stops at the first hit), gather every available option
+    for curatorial choice: the cached pick if any, then a fresh look at each taxon level,
+    then PhyloPic, then the observation's own photo. Doesn't write to cache - that only
+    happens once the curator actually picks one (see build_and_archive)."""
+    candidates = []
+    chain = taxon_chain(obs)
+    rank_labels = ["species", "genus", "family"]
+
+    cached_tid = next((tid for tid in chain if str(tid) in cache), None)
+    if cached_tid is not None:
+        label = "Cached pick" if cached_tid == obs["taxon"]["id"] else "Cached pick (higher taxon)"
+        candidates.append({"label": label, "art": cache[str(cached_tid)], "matched": cached_tid, "default": True})
+
+    for tid, rank in zip(chain, rank_labels):
+        if tid == cached_tid:
+            continue  # already shown above as the cached pick
+        try:
+            qid = wikidata_qid_for_inat(tid)
+            art = commons_illustration(qid) if qid else None
+        except Exception as e:
+            print(f"  commons lookup failed for {rank}: {e}")
+            art = None
+        if art:
+            art["wikidata"] = qid
+            candidates.append({"label": f"Commons ({rank})", "art": art, "matched": tid, "default": False})
+
+    try:
+        art = phylopic_silhouette(obs["taxon"]["name"])
+    except Exception as e:
+        print(f"  phylopic lookup failed: {e}")
+        art = None
+    if art:
+        candidates.append({"label": "PhyloPic silhouette", "art": art, "matched": obs["taxon"]["id"], "default": False})
+
+    photo_art = inat_photo_art(obs)
+    if photo_art:
+        candidates.append({"label": "Your iNat photo", "art": photo_art, "matched": obs["taxon"]["id"], "default": False})
+
+    return candidates
+
+
+def reveal(path):
+    """Open a file in Finder/Preview (macOS `open`); never fatal if that's unavailable."""
+    try:
+        subprocess.run(["open", str(path)], check=False)
+    except FileNotFoundError:
+        print(f"  (open this yourself: {path})")
+
+
 # ---------------------------------------------------------------- image processing
 
 BAYER4 = np.array([[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]) / 16.0
 
 
-def to_four_gray(img, box, paper_cut=0.40, ink_cut=0.02, dither=True):
+def to_four_gray(img, box, paper_cut=0.40, ink_cut=0.02, dither=True, mode="line_art"):
     """Fit art into box, push paper to white, quantize to 4 grays with ordered dither.
     paper_cut: in line art the paper covers most of the plate, so anything brighter than
     this percentile is treated as paper and becomes pure white. Raise it (0.6-0.8) for
     densely shaded plates or paintings; lower it for sparse line drawings.
-    Ordered dither compresses far better than Floyd-Steinberg, which matters for 90 KB."""
+    Ordered dither compresses far better than Floyd-Steinberg, which matters for 90 KB.
+
+    mode="photo": a real photo has no blank page to find - the "background" is scene
+    content (dirt, leaves, sky), so paper_cut's assumption that the brightest pixels are
+    blank paper blows out real detail instead. Use a plain symmetric contrast stretch
+    instead, and skip the median filter (that's for killing paper grain, not texture)."""
     if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
         # PhyloPic silhouettes are black-on-transparent; dropping alpha straight to
         # grayscale reads the hidden black RGB and paints the whole box solid black.
         bg = Image.new("RGBA", img.size, (255, 255, 255, 255))
         img = Image.alpha_composite(bg, img.convert("RGBA")).convert("RGB")
     g = ImageOps.grayscale(img)
-    g = g.filter(ImageFilter.MedianFilter(3))   # kill paper grain at full res, before
+    if mode != "photo":
+        g = g.filter(ImageFilter.MedianFilter(3))   # kill paper grain at full res, before
     g = ImageOps.contain(g, box, Image.LANCZOS)  # downscaling, so fine hatching survives
-    g = g.filter(ImageFilter.UnsharpMask(radius=1.2, percent=120, threshold=2))
+    g = g.filter(ImageFilter.UnsharpMask(radius=1.2, percent=80 if mode == "photo" else 120, threshold=2))
     a = np.asarray(g, dtype=np.float32) / 255.0
-    lo = np.quantile(a, ink_cut)
-    hi = np.quantile(a, paper_cut) - 0.05       # margin so paper noise doesn't speckle
+    if mode == "photo":
+        lo, hi = np.quantile(a, 0.02), np.quantile(a, 0.98)
+    else:
+        lo = np.quantile(a, ink_cut)
+        hi = np.quantile(a, paper_cut) - 0.05       # margin so paper noise doesn't speckle
     a = np.clip((a - lo) / max(hi - lo, 1e-3), 0, 1)       # aged paper -> white
     levels = len(GRAYS) - 1
     if dither:
@@ -384,6 +445,11 @@ def main():
                      help="mark an archived observation to be left out of device rotation, and exit")
     ap.add_argument("--unskip", type=int, metavar="OBS_ID",
                      help="clear that mark for an archived observation, and exit")
+    ap.add_argument("--curate", action="store_true",
+                     help="interactive, one observation at a time: see every art option "
+                          "rendered as it would look on the device, pick one, build it (--user only)")
+    ap.add_argument("--observation", type=int, metavar="OBS_ID",
+                     help="target one specific observation directly, fetched by id from iNat")
     args = ap.parse_args()
     if args.seed is not None:
         random.seed(args.seed)
@@ -395,12 +461,20 @@ def main():
     if args.skip is not None or args.unskip is not None:
         return set_skip_rotation(args.skip if args.skip is not None else args.unskip,
                                   skip=args.skip is not None)
+    if args.curate:
+        return run_curate(args)
 
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
     OUT_DIR.mkdir(exist_ok=True)
 
     if args.fixture:
         observations = [json.loads(Path(args.fixture).read_text())]
+    elif args.observation is not None:
+        data = http_json(f"https://api.inaturalist.org/v1/observations/{args.observation}")
+        results = data.get("results") or []
+        if not results:
+            sys.exit(f"No observation found with id {args.observation}.")
+        observations = [results[0]]
     elif args.new:
         if not args.user:
             sys.exit("--new requires --user.")
@@ -420,6 +494,46 @@ def main():
 
     CACHE_PATH.write_text(json.dumps(cache, indent=2))
     print_summary(results)
+
+
+def render_candidate_sheet(candidates):
+    """One row (wrapping at 3) of every art candidate for one observation, art-only - no
+    metadata panel, since that's identical regardless of which image wins and composing
+    it per-candidate would be wasted work. Each tile is run through the real to_four_gray
+    pipeline, so what you see is what would actually end up on the device, then upscaled
+    for visibility. Labeled with its menu number so the image maps to what you type."""
+    box = (ART_W - 30, H - 40)
+    tile = 480
+    label_h = 50
+    cols = min(3, len(candidates)) or 1
+    rows = -(-len(candidates) // cols)
+    sheet = Image.new("L", (tile * cols, (tile + label_h) * rows), 255)
+    d = ImageDraw.Draw(sheet)
+    font = load_font(15, bold=True)
+    for i, cand in enumerate(candidates):
+        r, c = divmod(i, cols)
+        x, y = c * tile, r * (tile + label_h)
+        art = cand["art"]
+        try:
+            raw = Image.open(io.BytesIO(http_bytes(art["url"])))
+            rotate = art.get("rotate") or 0
+            if rotate:
+                raw = raw.transpose({90: Image.Transpose.ROTATE_270, 180: Image.Transpose.ROTATE_180,
+                                      270: Image.Transpose.ROTATE_90}[rotate])
+            mode = "photo" if art.get("source") == "inat" else "line_art"
+            art_img = to_four_gray(raw, box, mode=mode)
+            canvas = Image.new("L", box, 255)
+            canvas.paste(art_img, ((box[0] - art_img.width) // 2, (box[1] - art_img.height) // 2))
+            sheet.paste(canvas.resize((tile, tile), Image.NEAREST), (x, y))
+        except Exception as e:
+            d.text((x + 8, y + 8), f"(couldn't load: {e})", font=font, fill=0)
+        d.rectangle([x, y, x + tile - 1, y + tile + label_h - 1], outline=170)
+        star = " *" if cand.get("default") else ""
+        d.text((x + 6, y + tile + 4), f"[{i + 1}] {cand['label']}{star}", font=font, fill=0)
+    REVIEW_DIR.mkdir(exist_ok=True)
+    out_path = REVIEW_DIR / "candidates.png"
+    sheet.save(out_path)
+    return out_path
 
 
 def write_contact_sheet():
@@ -497,32 +611,50 @@ def print_summary(results):
     print(f"library/ now has {total} entr{'y' if total == 1 else 'ies'} total.")
 
 
+def library_filename(obs):
+    """One observation = one file: named by the observation's own date and id, not the
+    run date, so re-running over the same observations is a no-op rather than a dupe."""
+    common = obs["taxon"].get("preferred_common_name") or obs["taxon"]["name"]
+    observed_on = obs.get("observed_on") or "undated"
+    return f"{observed_on}-{slugify(common)}-{obs.get('id', 'fixture')}.png"
+
+
 def process_observation(obs, cache, args):
     common = obs["taxon"].get("preferred_common_name") or obs["taxon"]["name"]
     print(f"Observation: {common} ({obs['taxon']['name']})")
 
-    # Name the file after the observation, not the run, so one observation = one file:
-    # re-running over the same observations (e.g. overlapping --count windows) is a no-op.
-    observed_on = obs.get("observed_on") or "undated"
-    filename = f"{observed_on}-{slugify(common)}-{obs.get('id', 'fixture')}.png"
-    target = LIBRARY_DIR / filename
-    if target.exists() and not args.force:
+    filename = library_filename(obs)
+    if (LIBRARY_DIR / filename).exists() and not args.force:
         print(f"  Already in library as {filename}; skipping (use --force to redo).")
         return {"skipped": True, "file": filename}
 
     if args.art:
         art = {"source": "local", "credit": Path(args.art).stem.replace("_", " ")}
-        raw, matched = Image.open(args.art), obs["taxon"]["id"]
+        matched = obs["taxon"]["id"]
     elif args.photo:
         art = inat_photo_art(obs)
-        raw = Image.open(io.BytesIO(http_bytes(art["url"]))) if art else None
         matched = obs["taxon"]["id"]
     else:
         art, matched = find_art(obs, cache)
         if art is None and not args.no_photo_fallback:
             art = inat_photo_art(obs)
             matched = obs["taxon"]["id"] if art else None
-        raw = Image.open(io.BytesIO(http_bytes(art["url"]))) if art else None
+
+    return build_and_archive(obs, art, matched, cache, args)
+
+
+def build_and_archive(obs, art, matched, cache, args):
+    """Given a chosen art candidate (or None), render the final screen, save it to
+    library/, update latest.png and index.json. Shared by the normal batch flow
+    (process_observation) and --curate, once the curator has picked a candidate."""
+    common = obs["taxon"].get("preferred_common_name") or obs["taxon"]["name"]
+    filename = library_filename(obs)
+    target = LIBRARY_DIR / filename
+
+    raw = None
+    if art:
+        raw = Image.open(args.art) if art.get("source") == "local" else \
+            Image.open(io.BytesIO(http_bytes(art["url"])))
     note = ""
     if art and matched and matched != obs["taxon"]["id"]:
         note = "Plate shows a related taxon (matched higher in the tree)"
@@ -536,13 +668,14 @@ def process_observation(obs, cache, args):
         raw = raw.transpose({90: Image.Transpose.ROTATE_270, 180: Image.Transpose.ROTATE_180,
                               270: Image.Transpose.ROTATE_90}[rotate])
 
-    art_img = to_four_gray(raw, (ART_W - 30, H - 40)) if raw is not None else None
+    mode = "photo" if art and art.get("source") == "inat" else "line_art"
+    art_img = to_four_gray(raw, (ART_W - 30, H - 40), mode=mode) if raw is not None else None
     screen = compose(obs, art, art_img, note)
 
     size = save_2bit(screen, target)
     if size > MAX_BYTES and art_img is not None:
         print(f"  {size:,} bytes is over the limit; retrying without dither")
-        art_img = to_four_gray(raw, (ART_W - 30, H - 40), dither=False)
+        art_img = to_four_gray(raw, (ART_W - 30, H - 40), mode=mode, dither=False)
         size = save_2bit(compose(obs, art, art_img, note), target)
     print(f"Wrote {target} ({size:,} bytes; limit {MAX_BYTES:,})"
           + ("  ** STILL OVER LIMIT **" if size > MAX_BYTES else ""))
@@ -554,6 +687,12 @@ def process_observation(obs, cache, args):
 
     # 2x preview so you can judge it on a normal monitor; local only, not archived.
     Image.open(target).convert("L").resize((W * 2, H * 2), Image.NEAREST).save(OUT_DIR / "preview@2x.png")
+
+    # A manually chosen Commons/PhyloPic pick becomes that species' default too (same
+    # promotion find_art already does for automatic picks) - but not an iNat photo or a
+    # local file, which are specific to this one sighting, not the species.
+    if art and art.get("source") in ("commons", "phylopic") and matched is not None:
+        cache[str(matched)] = art
 
     entries = json.loads(LIBRARY_INDEX.read_text()) if LIBRARY_INDEX.exists() else []
     entries = [e for e in entries if e.get("file") != filename]  # replacing on --force
@@ -579,6 +718,85 @@ def process_observation(obs, cache, args):
     LIBRARY_INDEX.write_text(json.dumps(entries, indent=2))
 
     return {"skipped": False, "file": filename, "art_source": art.get("source") if art else "none"}
+
+
+def run_curate(args):
+    """Interactive, one observation at a time: see every art option rendered as it would
+    look on the device, pick one, build it, then move on."""
+    if not args.user:
+        sys.exit("--curate requires --user.")
+    cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
+    OUT_DIR.mkdir(exist_ok=True)
+
+    queue = [o for o in pick_recent(args.user, 200) if not (LIBRARY_DIR / library_filename(o)).exists()]
+    if not queue:
+        print("Nothing new to review.")
+        return
+    print(f"{len(queue)} observation(s) to review.\n")
+
+    opened_sheet_once = False
+    built = skipped = 0
+    for idx, obs in enumerate(queue, 1):
+        common = obs["taxon"].get("preferred_common_name") or obs["taxon"]["name"]
+        print(f"[{idx}/{len(queue)}] {common} ({obs['taxon']['name']}) "
+              f"- observed {obs.get('observed_on', 'unknown date')}")
+
+        candidates = find_all_art_candidates(obs, cache)
+        if not candidates:
+            print("  No art candidates at all (no photo, no historical art) - archiving text-only.")
+            result = build_and_archive(obs, None, None, cache, args)
+            print(f"  -> {result['file']}  (none)\n")
+            built += 1
+            continue
+
+        sheet_path = render_candidate_sheet(candidates)
+        if not opened_sheet_once:
+            reveal(sheet_path)
+            opened_sheet_once = True
+        print(f"  Candidates: {sheet_path} (Quick Look it again each round - spacebar in Finder)")
+        for n, cand in enumerate(candidates, 1):
+            star = "  (cached pick)" if cand.get("default") else ""
+            print(f"    [{n}] {cand['label']}{star}")
+
+        # Invalid input re-prompts for this same observation - never silently abandons it.
+        picked, quit_now = None, False
+        while picked is None and not quit_now:
+            choice = input(f"  Pick 1-{len(candidates)} (Enter = default, s = skip, q = quit): ").strip().lower()
+            if choice == "q":
+                quit_now = True
+            elif choice == "s":
+                skipped += 1
+                picked = "skip"
+            elif choice == "":
+                picked = next((c for c in candidates if c.get("default")), candidates[0])
+            else:
+                try:
+                    picked = candidates[int(choice) - 1]
+                except (ValueError, IndexError):
+                    print(f"  Not a valid choice - pick 1-{len(candidates)}, s, or q.")
+                    picked = None
+        if quit_now:
+            break
+        if picked == "skip":
+            continue
+
+        result = build_and_archive(obs, picked["art"], picked["matched"], cache, args)
+        print(f"  -> {result['file']}  ({result['art_source']})\n")
+        built += 1
+
+        action = None
+        while action not in ("n", "q"):
+            action = input("  [n]ext, [r]eview this one, [q]uit: ").strip().lower()
+            if action == "r":
+                reveal(OUT_DIR / "preview@2x.png")
+        if action == "q":
+            break
+
+    CACHE_PATH.write_text(json.dumps(cache, indent=2))
+    done = built + skipped
+    left = len(queue) - done
+    print(f"\nSession complete. Built {built}, skipped {skipped} ({done} of {len(queue)} reviewed)."
+          + (f" {left} left for next time." if left else ""))
 
 
 if __name__ == "__main__":
