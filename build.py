@@ -390,6 +390,36 @@ def wrap(draw, text, font, width):
     return lines
 
 
+def wrap_capped(draw, text, font, width, max_lines):
+    """wrap(), but truncated to max_lines - trimming any trailing comma/space first and
+    marking it with an ellipsis so a cut-off line doesn't just dangle on a comma as if
+    the text had ended there."""
+    lines = wrap(draw, text, font, width)
+    if len(lines) <= max_lines:
+        return lines
+    lines = lines[:max_lines]
+    lines[-1] = lines[-1].rstrip(" ,") + "…"
+    return lines
+
+
+def format_date(s):
+    """"2020-07-25" -> "July 25, 2020"; anything that doesn't parse is shown as-is."""
+    if not s:
+        return s
+    try:
+        return datetime.datetime.strptime(s, "%Y-%m-%d").strftime("%B %-d, %Y")
+    except ValueError:
+        return s
+
+
+def clean_place_guess(s):
+    """iNat place names occasionally have a doubled or trailing comma when an admin
+    level is blank (e.g. "Some Park, , CA")."""
+    if not s:
+        return s
+    return re.sub(r",\s*,", ",", s).strip(" ,")
+
+
 def compose(obs, art, art_img, matched_rank_note, layout="left"):
     """layout="left" (default) puts the plate on the left, text on the right; "right"
     mirrors it - handy when a plate's subject faces right and reads better with the
@@ -423,18 +453,18 @@ def compose(obs, art, art_img, matched_rank_note, layout="left"):
     y += 44
 
     rows = [
-        ("Observed", obs.get("observed_on") or "unknown date"),
-        ("Where", obs.get("place_guess") or "location hidden"),
-        ("By", obs.get("user", {}).get("login", "")),
+        ("Observed", format_date(obs.get("observed_on")) or "unknown date", 1),
+        ("Location", clean_place_guess(obs.get("place_guess")) or "location hidden", 3),
+        ("By", obs.get("user", {}).get("login", ""), 1),
     ]
     small = load_font(16)
     label = load_font(13, bold=True)
-    for k, v in rows:
+    for k, v, max_lines in rows:
         if not v:
             continue
         d.text((x0, y), k.upper(), font=label, fill=85)
         y += 18
-        for line in wrap(d, v, small, x1 - x0)[:2]:
+        for line in wrap_capped(d, v, small, x1 - x0, max_lines):
             d.text((x0, y), line, font=small, fill=0)
             y += 20
         y += 8
