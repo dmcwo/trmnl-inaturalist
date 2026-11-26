@@ -9,6 +9,26 @@
     "license": "Public domain",
     "wikidata": "Q608572"
   },
+  "3954": {
+    "source": "commons",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2c/Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXXII%29_BHL41947955.jpg/1280px-Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXXII%29_BHL41947955.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "page": "https://commons.wikimedia.org/wiki/File:Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_(Tab._XXXII)_BHL41947955.jpg",
+    "credit": "Recueil de divers oiseaux \u00e9trangers et peu communs (Tab. XXXII) BHL41947955",
+    "artist": "Catesby, Mark; Edwards, George; Edwards, George; Huth, Georg Leonhart; Seligmann, Johann Michael",
+    "date": "(1771-1772)",
+    "license": "Public domain",
+    "wikidata": "Q844714"
+  },
+  "144491": {
+    "source": "commons",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f7/The_birds_of_America_%28Pl._347%29_%288590179676%29.jpg/1280px-The_birds_of_America_%28Pl._347%29_%288590179676%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "page": "https://commons.wikimedia.org/wiki/File:The_birds_of_America_(Pl._347)_(8590179676).jpg",
+    "credit": "The birds of America (Pl. 347) (8590179676)",
+    "artist": "Audubon, John James; Bowen, John T.",
+    "date": "1842",
+    "license": "Public domain",
+    "wikidata": "Q831611"
+  },
   "145308": {
     "source": "commons",
     "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXIII%29_BHL41947928.jpg/1280px-Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXIII%29_BHL41947928.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
@@ -18,5 +38,25 @@
     "date": "(1771-1772)",
     "license": "Public domain",
     "wikidata": "Q27075863"
+  },
+  "9100": {
+    "source": "commons",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/The_birds_of_America_%28Pl._189%29_%288571226515%29.jpg/1280px-The_birds_of_America_%28Pl._189%29_%288571226515%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "page": "https://commons.wikimedia.org/wiki/File:The_birds_of_America_(Pl._189)_(8571226515).jpg",
+    "credit": "The birds of America (Pl. 189) (8571226515)",
+    "artist": "Audubon, John James; Bowen, John T.",
+    "date": "1841",
+    "license": "Public domain",
+    "wikidata": "Q842599"
+  },
+  "9420": {
+    "source": "commons",
+    "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/The_birds_of_America_%28Pl._194%29_%288572324230%29.jpg/1280px-The_birds_of_America_%28Pl._194%29_%288572324230%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+    "page": "https://commons.wikimedia.org/wiki/File:The_birds_of_America_(Pl._194)_(8572324230).jpg",
+    "credit": "The birds of America (Pl. 194) (8572324230)",
+    "artist": "Audubon, John James; Bowen, John T.",
+    "date": "1841",
+    "license": "Public domain",
+    "wikidata": "Q1586862"
   }
 }

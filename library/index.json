@@ -1,8 +1,341 @@
 [
   {
+    "file": "2025-05-03-lesser-goldfinch-278271572.png",
+    "generated_at": "2026-11-26T06:04:27+00:00",
+    "bytes": 13598,
+    "observation": {
+      "id": 278271572,
+      "observed_on": "2025-05-03",
+      "place_guess": "Mira Mesa, San Diego, CA, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 145308,
+      "name": "Spinus psaltria",
+      "common_name": "Lesser Goldfinch",
+      "matched_id": 145308
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXIII%29_BHL41947928.jpg/1280px-Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXIII%29_BHL41947928.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_(Tab._XXIII)_BHL41947928.jpg",
+      "credit": "Recueil de divers oiseaux \u00e9trangers et peu communs (Tab. XXIII) BHL41947928",
+      "artist": "Catesby, Mark; Edwards, George; Edwards, George; Huth, Georg Leonhart; Seligmann, Johann Michael",
+      "date": "(1771-1772)",
+      "license": "Public domain",
+      "wikidata": "Q27075863"
+    },
+    "note": "",
+    "layout": "right"
+  },
+  {
+    "file": "2025-05-03-spotted-towhee-278095466.png",
+    "generated_at": "2026-11-26T06:03:19+00:00",
+    "bytes": 11215,
+    "observation": {
+      "id": 278095466,
+      "observed_on": "2025-05-03",
+      "place_guess": "Mira Mesa, San Diego, CA, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 9420,
+      "name": "Pipilo maculatus",
+      "common_name": "Spotted Towhee",
+      "matched_id": 9420
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d4/The_birds_of_America_%28Pl._194%29_%288572324230%29.jpg/1280px-The_birds_of_America_%28Pl._194%29_%288572324230%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:The_birds_of_America_(Pl._194)_(8572324230).jpg",
+      "credit": "The birds of America (Pl. 194) (8572324230)",
+      "artist": "Audubon, John James; Bowen, John T.",
+      "date": "1841",
+      "license": "Public domain",
+      "wikidata": "Q1586862"
+    },
+    "note": "",
+    "layout": "right"
+  },
+  {
+    "file": "2025-05-03-song-sparrow-278097712.png",
+    "generated_at": "2026-11-26T06:02:57+00:00",
+    "bytes": 11360,
+    "observation": {
+      "id": 278097712,
+      "observed_on": "2025-05-03",
+      "place_guess": "Mira Mesa, San Diego, CA, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 9100,
+      "name": "Melospiza melodia",
+      "common_name": "Song Sparrow",
+      "matched_id": 9100
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/The_birds_of_America_%28Pl._189%29_%288571226515%29.jpg/1280px-The_birds_of_America_%28Pl._189%29_%288571226515%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:The_birds_of_America_(Pl._189)_(8571226515).jpg",
+      "credit": "The birds of America (Pl. 189) (8571226515)",
+      "artist": "Audubon, John James; Bowen, John T.",
+      "date": "1841",
+      "license": "Public domain",
+      "wikidata": "Q842599"
+    },
+    "note": "",
+    "layout": "left"
+  },
+  {
+    "file": "2025-04-29-desert-cottontail-276592888.png",
+    "generated_at": "2026-11-26T06:02:29+00:00",
+    "bytes": 13825,
+    "observation": {
+      "id": 276592888,
+      "observed_on": "2025-04-29",
+      "place_guess": "Mont Blanc Dr, San Diego, CA, US",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 43115,
+      "name": "Sylvilagus audubonii",
+      "common_name": "Desert Cottontail",
+      "matched_id": 43115
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/92/Mammals_of_North_America%3B_the_description_of_species_based_chiefly_on_the_collections_in_the_Museum_of_the_Smithsonian_Institution_%28Plate_XIII%29_BHL43276730.jpg/1280px-Mammals_of_North_America%3B_the_description_of_species_based_chiefly_on_the_collections_in_the_Museum_of_the_Smithsonian_Institution_%28Plate_XIII%29_BHL43276730.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:Mammals_of_North_America;_the_description_of_species_based_chiefly_on_the_collections_in_the_Museum_of_the_Smithsonian_Institution_(Plate_XIII)_BHL43276730.jpg",
+      "credit": "Mammals of North America; the description of species based chiefly on the collections in the Museum of the Smithsonian Institution (Plate XIII) BHL43276730",
+      "artist": "Spencer Fullerton Baird",
+      "date": "1859",
+      "license": "Public domain",
+      "wikidata": "Q608572"
+    },
+    "note": "",
+    "layout": "right"
+  },
+  {
+    "file": "2025-04-27-lesser-goldfinch-275104866.png",
+    "generated_at": "2026-11-26T06:02:10+00:00",
+    "bytes": 13688,
+    "observation": {
+      "id": 275104866,
+      "observed_on": "2025-04-27",
+      "place_guess": "Mont Blanc Dr, San Diego, CA, US",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 145308,
+      "name": "Spinus psaltria",
+      "common_name": "Lesser Goldfinch",
+      "matched_id": 145308
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXIII%29_BHL41947928.jpg/1280px-Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXIII%29_BHL41947928.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_(Tab._XXIII)_BHL41947928.jpg",
+      "credit": "Recueil de divers oiseaux \u00e9trangers et peu communs (Tab. XXIII) BHL41947928",
+      "artist": "Catesby, Mark; Edwards, George; Edwards, George; Huth, Georg Leonhart; Seligmann, Johann Michael",
+      "date": "(1771-1772)",
+      "license": "Public domain",
+      "wikidata": "Q27075863"
+    },
+    "note": "",
+    "layout": "right"
+  },
+  {
+    "file": "2025-04-27-cassin-s-kingbird-275078871.png",
+    "generated_at": "2026-11-26T06:01:42+00:00",
+    "bytes": 35854,
+    "observation": {
+      "id": 275078871,
+      "observed_on": "2025-04-27",
+      "place_guess": "Rose Quartz Cir, San Diego, CA, US",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 16779,
+      "name": "Tyrannus vociferans",
+      "common_name": "Cassin's Kingbird",
+      "matched_id": 16779
+    },
+    "art": {
+      "source": "inat",
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/494374882/large.jpg",
+      "page": "https://www.inaturalist.org/observations/275078871",
+      "credit": "Your observation photo",
+      "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
+    },
+    "note": "",
+    "layout": "left"
+  },
+  {
+    "file": "2025-04-27-western-side-blotched-lizard-275059321.png",
+    "generated_at": "2026-11-26T06:01:06+00:00",
+    "bytes": 35867,
+    "observation": {
+      "id": 275059321,
+      "observed_on": "2025-04-27",
+      "place_guess": "Rose Quartz Cir, San Diego, CA, US",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 36100,
+      "name": "Uta stansburiana elegans",
+      "common_name": "Western Side-blotched Lizard",
+      "matched_id": 36100
+    },
+    "art": {
+      "source": "inat",
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/494344748/large.jpg",
+      "page": "https://www.inaturalist.org/observations/275059321",
+      "credit": "Your observation photo",
+      "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
+    },
+    "note": "",
+    "layout": "left"
+  },
+  {
+    "file": "2024-12-28-california-towhee-256534548.png",
+    "generated_at": "2026-11-26T06:00:39+00:00",
+    "bytes": 30748,
+    "observation": {
+      "id": 256534548,
+      "observed_on": "2024-12-28",
+      "place_guess": "Mar Scenic Trail, San Diego, CA, US",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 73044,
+      "name": "Melozone crissalis",
+      "common_name": "California Towhee",
+      "matched_id": 73044
+    },
+    "art": {
+      "source": "inat",
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/459976573/large.jpg",
+      "page": "https://www.inaturalist.org/observations/256534548",
+      "credit": "Your observation photo",
+      "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
+    },
+    "note": "",
+    "layout": "right"
+  },
+  {
+    "file": "2024-06-09-western-red-humped-caterpillar-moth-221660134.png",
+    "generated_at": "2026-11-26T06:00:10+00:00",
+    "bytes": 29196,
+    "observation": {
+      "id": 221660134,
+      "observed_on": "2024-06-09",
+      "place_guess": "Coupland Way, San Diego, CA, US",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 1373724,
+      "name": "Oedemasia salicis",
+      "common_name": "Western Red-Humped Caterpillar Moth",
+      "matched_id": 1373724
+    },
+    "art": {
+      "source": "inat",
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/392556165/large.jpg",
+      "page": "https://www.inaturalist.org/observations/221660134",
+      "credit": "Your observation photo",
+      "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
+    },
+    "note": "",
+    "layout": "left"
+  },
+  {
+    "file": "2020-12-21-willet-66907630.png",
+    "generated_at": "2026-11-26T05:59:38+00:00",
+    "bytes": 14993,
+    "observation": {
+      "id": 66907630,
+      "observed_on": "2020-12-21",
+      "place_guess": "Manhattan Beach, CA 90266, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 144491,
+      "name": "Tringa semipalmata",
+      "common_name": "Willet",
+      "matched_id": 144491
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f7/The_birds_of_America_%28Pl._347%29_%288590179676%29.jpg/1280px-The_birds_of_America_%28Pl._347%29_%288590179676%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:The_birds_of_America_(Pl._347)_(8590179676).jpg",
+      "credit": "The birds of America (Pl. 347) (8590179676)",
+      "artist": "Audubon, John James; Bowen, John T.",
+      "date": "1842",
+      "license": "Public domain",
+      "wikidata": "Q831611"
+    },
+    "note": "",
+    "layout": "right"
+  },
+  {
+    "file": "2020-11-24-marbled-godwit-65553337.png",
+    "generated_at": "2026-11-26T05:58:48+00:00",
+    "bytes": 12683,
+    "observation": {
+      "id": 65553337,
+      "observed_on": "2020-11-24",
+      "place_guess": "El Segundo, CA 90245, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 3954,
+      "name": "Limosa fedoa",
+      "common_name": "Marbled Godwit",
+      "matched_id": 3954
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2c/Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXXII%29_BHL41947955.jpg/1280px-Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXXII%29_BHL41947955.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_(Tab._XXXII)_BHL41947955.jpg",
+      "credit": "Recueil de divers oiseaux \u00e9trangers et peu communs (Tab. XXXII) BHL41947955",
+      "artist": "Catesby, Mark; Edwards, George; Edwards, George; Huth, Georg Leonhart; Seligmann, Johann Michael",
+      "date": "(1771-1772)",
+      "license": "Public domain",
+      "wikidata": "Q844714"
+    },
+    "note": "",
+    "layout": "left"
+  },
+  {
+    "file": "2020-11-22-say-s-phoebe-65438139.png",
+    "generated_at": "2026-11-26T05:58:19+00:00",
+    "bytes": 34777,
+    "observation": {
+      "id": 65438139,
+      "observed_on": "2020-11-22",
+      "place_guess": "Kenneth Hahn State Recreation Area, Los Angeles, CA, US",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 17009,
+      "name": "Sayornis saya",
+      "common_name": "Say's Phoebe",
+      "matched_id": 17009
+    },
+    "art": {
+      "source": "inat",
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/105325277/large.jpg",
+      "page": "https://www.inaturalist.org/observations/65438139",
+      "credit": "Your observation photo",
+      "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
+    },
+    "note": "",
+    "layout": "left"
+  },
+  {
     "file": "2020-11-22-allen-s-hummingbird-65438301.png",
-    "generated_at": "2026-11-26T02:55:31+00:00",
-    "bytes": 16181,
+    "generated_at": "2026-11-26T05:57:25+00:00",
+    "bytes": 16938,
     "observation": {
       "id": 65438301,
       "observed_on": "2020-11-22",
@@ -22,12 +355,13 @@
       "credit": "Your observation photo",
       "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
     },
-    "note": ""
+    "note": "",
+    "layout": "right"
   },
   {
     "file": "2020-11-22-lesser-goldfinch-65438569.png",
-    "generated_at": "2026-11-26T02:54:55+00:00",
-    "bytes": 13596,
+    "generated_at": "2026-11-26T05:57:10+00:00",
+    "bytes": 27527,
     "observation": {
       "id": 65438569,
       "observed_on": "2020-11-22",
@@ -41,21 +375,19 @@
       "matched_id": 145308
     },
     "art": {
-      "source": "commons",
-      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/86/Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXIII%29_BHL41947928.jpg/1280px-Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_%28Tab._XXIII%29_BHL41947928.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
-      "page": "https://commons.wikimedia.org/wiki/File:Recueil_de_divers_oiseaux_%C3%A9trangers_et_peu_communs_(Tab._XXIII)_BHL41947928.jpg",
-      "credit": "Recueil de divers oiseaux \u00e9trangers et peu communs (Tab. XXIII) BHL41947928",
-      "artist": "Catesby, Mark; Edwards, George; Edwards, George; Huth, Georg Leonhart; Seligmann, Johann Michael",
-      "date": "(1771-1772)",
-      "license": "Public domain",
-      "wikidata": "Q27075863"
+      "source": "inat",
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/105326100/large.jpg",
+      "page": "https://www.inaturalist.org/observations/65438569",
+      "credit": "Your observation photo",
+      "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
     },
-    "note": ""
+    "note": "",
+    "layout": "right"
   },
   {
     "file": "2020-08-29-western-fence-lizard-57950197.png",
-    "generated_at": "2026-11-26T02:54:07+00:00",
-    "bytes": 33209,
+    "generated_at": "2026-11-26T05:56:31+00:00",
+    "bytes": 34170,
     "observation": {
       "id": 57950197,
       "observed_on": "2020-08-29",
@@ -75,12 +407,13 @@
       "credit": "Your observation photo",
       "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
     },
-    "note": ""
+    "note": "",
+    "layout": "right"
   },
   {
     "file": "2020-08-16-citrus-56688486.png",
-    "generated_at": "2026-11-26T02:53:41+00:00",
-    "bytes": 28093,
+    "generated_at": "2026-11-26T05:56:00+00:00",
+    "bytes": 29042,
     "observation": {
       "id": 56688486,
       "observed_on": "2020-08-16",
@@ -100,12 +433,13 @@
       "credit": "Your observation photo",
       "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
     },
-    "note": ""
+    "note": "",
+    "layout": "right"
   },
   {
     "file": "2020-07-25-desert-cottontail-54347272.png",
-    "generated_at": "2026-11-26T02:53:14+00:00",
-    "bytes": 13390,
+    "generated_at": "2026-11-26T05:41:26+00:00",
+    "bytes": 13965,
     "observation": {
       "id": 54347272,
       "observed_on": "2020-07-25",
@@ -128,12 +462,13 @@
       "license": "Public domain",
       "wikidata": "Q608572"
     },
-    "note": ""
+    "note": "",
+    "layout": "right"
   },
   {
     "file": "2020-07-25-fingerfigs-54332237.png",
-    "generated_at": "2026-11-26T02:52:19+00:00",
-    "bytes": 35007,
+    "generated_at": "2026-11-26T05:40:38+00:00",
+    "bytes": 35470,
     "observation": {
       "id": 54332237,
       "observed_on": "2020-07-25",
@@ -153,6 +488,7 @@
       "credit": "Your observation photo",
       "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
     },
-    "note": ""
+    "note": "",
+    "layout": "left"
   }
 ]
