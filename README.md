@@ -20,16 +20,25 @@ python build.py --lat 32.88 --lng -117.24 --radius 10
 
 # Reproducible pick while tuning
 python build.py --user dmcwo --seed 42
+
+# Backfill: the 10 most recent observations, deterministic, newest-first
+python build.py --user dmcwo --count 10
 ```
 
+Other flags:
+- `--photo`: use the observation's own photo instead of searching for historical art
+- `--no-photo-fallback`: when no historical art is found, show text-only instead of falling back to the observation's photo (the default is to fall back)
+- `--rotate {0,90,180,270}`: rotate the plate clockwise before processing — see "Curating" below
+- `--force`: reprocess an observation that's already in `library/` (normally skipped — see below)
+
 Each run adds a file to `library/`, the published archive:
-- `library/<date>-<common-name>-<observation-id>.png`: that run's 800x480, 2-bit file (must stay under 90,000 bytes)
-- `library/latest.png`: a copy of the file above, always under this same name — point TRMNL's Alias plugin at this one, fixed URL
-- `library/index.json`: a manifest with one entry per run (observation, taxon, and full art/attribution metadata), newest first
+- `library/<observed-date>-<common-name>-<observation-id>.png`: that observation's 800x480, 2-bit file (must stay under 90,000 bytes). One file per observation — the filename is the observation's own date and id, not the date you happened to run the script, so it's a stable record of that sighting and re-running over the same observations is a no-op (skipped, not duplicated; pass `--force` to redo one on purpose).
+- `library/latest.png`: a copy of the most recently processed file, always under this same name — point TRMNL's Alias plugin at this one, fixed URL
+- `library/index.json`: a manifest with one entry per observation (observation, taxon, and full art/attribution metadata), newest-observed-first
 
-`out/preview@2x.png` is a local-only enlarged copy of the latest run, for judging on a normal monitor. `out/` is gitignored and never published.
+`out/preview@2x.png` is a local-only enlarged copy of the most recently processed file, for judging on a normal monitor. `out/` is gitignored and never published. After a run, a summary lists what was added vs. skipped, with each one's art source.
 
-Run it repeatedly. Each run picks a new observation, archives a new file in `library/`, and adds any newly found art to `cache.json`.
+Run it repeatedly. Each run picks new observations, archives a file per observation in `library/`, and adds any newly found art to `cache.json`. The same species observed on different dates gets a separate entry each time (it's a record of observations, not a one-per-species gallery) — if you later want species-level aggregation (count of sightings, locations, etc.) instead of or alongside this, that's a bigger feature worth designing separately.
 
 ## Curating
 
@@ -43,9 +52,12 @@ Run it repeatedly. Each run picks a new observation, archives a new file in `lib
   "credit": "Hyla regilla, Pl. XII",
   "artist": "...",
   "date": "1859",
-  "license": "Public domain"
+  "license": "Public domain",
+  "rotate": 90
 }
 ```
+
+`rotate` is optional. Some large folio plate scans (Audubon/BHL in particular) are stored sideways in the file itself, with no EXIF flag to detect it — this varies plate-by-plate, not by series, so check each one. Use `--rotate {90,180,270}` to preview a fix before saving it to the cache entry.
 
 ## Tuning the image
 
@@ -63,14 +75,13 @@ Put `regular.ttf`, `bold.ttf`, and `italic.ttf` in `fonts/`. The bundled files a
 2. Wikimedia Commons: files that depict the taxon's Wikidata item (joined via iNat taxon ID, P3151), typed as illustration, with a BHL page ID
 3. Repeat step 2 for the genus and family
 4. PhyloPic silhouette (via GBIF name match)
-5. No art: text-only layout
+5. The observation's own photo (skip with `--no-photo-fallback`)
+6. No art: text-only layout
+
+Not every photo looks good run through the 4-gray pipeline (it's tuned for line art, not photos with busy backgrounds) — that's part of triage: check `out/preview@2x.png`, and if a particular observation's photo came out poorly, either live with it or swap in something better by hand.
 
 ## Moving to GitHub Actions
 
 Once it looks right locally, push this folder to a GitHub repo, enable GitHub Pages, and keep `.github/workflows/build.yml`. It runs the same command on a schedule, commits the new `library/` files, and publishes them. Point the TRMNL Alias plugin at the Pages URL for `library/latest.png` — that filename never changes, only its contents do.
 
 To dry-run the workflow itself on your machine, [`act`](https://github.com/nektos/act) runs GitHub Actions locally in Docker. It's optional; running `build.py` directly covers almost everything.
-
-## Untested parts
-
-The live lookups (iNat, Wikidata, Commons, GBIF, PhyloPic) were written against documented API shapes but have **not been run**, because the environment they were written in couldn't reach those services. Your first `--user dmcwo` run is the real test. If something breaks, the error message names the lookup that failed.

@@ -154,6 +154,22 @@ def phylopic_silhouette(scientific_name):
     }
 
 
+def inat_photo_art(obs):
+    """Fall back to the observation's own photo. Not cached in cache.json - that's keyed
+    by taxon, but each observation's photo is specific to that one sighting."""
+    photos = obs.get("photos") or []
+    if not photos:
+        return None
+    p = photos[0]
+    return {
+        "source": "inat",
+        "url": p["url"].replace("square.jpg", "large.jpg"),
+        "page": f"https://www.inaturalist.org/observations/{obs.get('id', '')}",
+        "credit": "Your observation photo",
+        "artist": p.get("attribution") or "",
+    }
+
+
 def _strip_html(s):
     return re.sub(r"<[^>]+>", "", s or "").strip()
 
@@ -353,6 +369,12 @@ def main():
                      help="rotate the plate clockwise before processing; overrides cache.json")
     ap.add_argument("--count", type=int, default=1,
                      help="process this many of the most recent observations in one run (--user only)")
+    ap.add_argument("--photo", action="store_true",
+                     help="use the observation's own photo instead of searching for historical art")
+    ap.add_argument("--no-photo-fallback", action="store_true",
+                     help="when no historical art is found, show text-only instead of the observation's photo")
+    ap.add_argument("--force", action="store_true",
+                     help="reprocess and overwrite an observation already in library/ (default: skip it)")
     args = ap.parse_args()
     if args.seed is not None:
         random.seed(args.seed)
@@ -374,20 +396,56 @@ def main():
 
     # Process oldest-to-newest so index.json ends up newest-first: each run inserts
     # at position 0, so processing newest last puts it on top.
-    for obs in reversed(observations):
-        process_observation(obs, cache, args)
+    results = [process_observation(obs, cache, args) for obs in reversed(observations)]
 
     CACHE_PATH.write_text(json.dumps(cache, indent=2))
+    print_summary(results)
+
+
+def print_summary(results):
+    added = [r for r in results if not r["skipped"]]
+    skipped = [r for r in results if r["skipped"]]
+    print("\n==== Summary ====")
+    print(f"{len(results)} observation(s) processed: {len(added)} added, "
+          f"{len(skipped)} already in library (skipped)")
+    for r in added:
+        print(f"  + {r['file']}  ({r['art_source']})")
+    for r in skipped:
+        print(f"  = {r['file']}  (already in library; use --force to redo)")
+    if added:
+        counts = {}
+        for r in added:
+            counts[r["art_source"]] = counts.get(r["art_source"], 0) + 1
+        print("Art sources: " + ", ".join(f"{n} {src}" for src, n in counts.items()))
+    total = len(json.loads(LIBRARY_INDEX.read_text())) if LIBRARY_INDEX.exists() else 0
+    print(f"library/ now has {total} entr{'y' if total == 1 else 'ies'} total.")
 
 
 def process_observation(obs, cache, args):
-    print(f"Observation: {obs['taxon'].get('preferred_common_name')} ({obs['taxon']['name']})")
+    common = obs["taxon"].get("preferred_common_name") or obs["taxon"]["name"]
+    print(f"Observation: {common} ({obs['taxon']['name']})")
+
+    # Name the file after the observation, not the run, so one observation = one file:
+    # re-running over the same observations (e.g. overlapping --count windows) is a no-op.
+    observed_on = obs.get("observed_on") or "undated"
+    filename = f"{observed_on}-{slugify(common)}-{obs.get('id', 'fixture')}.png"
+    target = LIBRARY_DIR / filename
+    if target.exists() and not args.force:
+        print(f"  Already in library as {filename}; skipping (use --force to redo).")
+        return {"skipped": True, "file": filename}
 
     if args.art:
         art = {"source": "local", "credit": Path(args.art).stem.replace("_", " ")}
         raw, matched = Image.open(args.art), obs["taxon"]["id"]
+    elif args.photo:
+        art = inat_photo_art(obs)
+        raw = Image.open(io.BytesIO(http_bytes(art["url"]))) if art else None
+        matched = obs["taxon"]["id"]
     else:
         art, matched = find_art(obs, cache)
+        if art is None and not args.no_photo_fallback:
+            art = inat_photo_art(obs)
+            matched = obs["taxon"]["id"] if art else None
         raw = Image.open(io.BytesIO(http_bytes(art["url"]))) if art else None
     note = ""
     if art and matched and matched != obs["taxon"]["id"]:
@@ -404,13 +462,6 @@ def process_observation(obs, cache, args):
 
     art_img = to_four_gray(raw, (ART_W - 30, H - 40)) if raw is not None else None
     screen = compose(obs, art, art_img, note)
-
-    # Semantically named archive file: run-date + common name + observation id,
-    # so repeated runs (or fixture tests) never collide.
-    common = obs["taxon"].get("preferred_common_name") or obs["taxon"]["name"]
-    today = datetime.date.today().isoformat()
-    filename = f"{today}-{slugify(common)}-{obs.get('id', 'fixture')}.png"
-    target = LIBRARY_DIR / filename
 
     size = save_2bit(screen, target)
     if size > MAX_BYTES and art_img is not None:
@@ -429,6 +480,7 @@ def process_observation(obs, cache, args):
     Image.open(target).convert("L").resize((W * 2, H * 2), Image.NEAREST).save(OUT_DIR / "preview@2x.png")
 
     entries = json.loads(LIBRARY_INDEX.read_text()) if LIBRARY_INDEX.exists() else []
+    entries = [e for e in entries if e.get("file") != filename]  # replacing on --force
     entries.insert(0, {
         "file": filename,
         "generated_at": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
@@ -449,6 +501,8 @@ def process_observation(obs, cache, args):
         "note": note,
     })
     LIBRARY_INDEX.write_text(json.dumps(entries, indent=2))
+
+    return {"skipped": False, "file": filename, "art_source": art.get("source") if art else "none"}
 
 
 if __name__ == "__main__":

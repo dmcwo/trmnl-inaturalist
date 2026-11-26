@@ -1,7 +1,82 @@
 [
   {
-    "file": "2026-11-25-great-tailed-grackle-409566308.png",
-    "generated_at": "2026-11-25T23:59:19+00:00",
+    "file": "2026-07-22-great-banded-grayling-389904309.png",
+    "generated_at": "2026-11-26T00:34:34+00:00",
+    "bytes": 20154,
+    "observation": {
+      "id": 389904309,
+      "observed_on": "2026-07-22",
+      "place_guess": "Aulon, France",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 334385,
+      "name": "Brintesia circe",
+      "common_name": "Great Banded Grayling",
+      "matched_id": 334385
+    },
+    "art": {
+      "source": "inat",
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/714249441/large.jpg",
+      "page": "https://www.inaturalist.org/observations/389904309",
+      "credit": "Your observation photo",
+      "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
+    },
+    "note": ""
+  },
+  {
+    "file": "2026-07-22-gatekeeper-389904313.png",
+    "generated_at": "2026-11-26T00:34:29+00:00",
+    "bytes": 15082,
+    "observation": {
+      "id": 389904313,
+      "observed_on": "2026-07-22",
+      "place_guess": "Aulon, France",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 62429,
+      "name": "Pyronia tithonus",
+      "common_name": "Gatekeeper",
+      "matched_id": 62429
+    },
+    "art": {
+      "source": "inat",
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/714249452/large.jpg",
+      "page": "https://www.inaturalist.org/observations/389904313",
+      "credit": "Your observation photo",
+      "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
+    },
+    "note": ""
+  },
+  {
+    "file": "2026-07-22-common-rock-rose-386178875.png",
+    "generated_at": "2026-11-26T00:34:25+00:00",
+    "bytes": 28681,
+    "observation": {
+      "id": 386178875,
+      "observed_on": "2026-07-22",
+      "place_guess": "Aulon, Occitanie, FR",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 84278,
+      "name": "Helianthemum nummularium",
+      "common_name": "Common Rock-rose",
+      "matched_id": 84278
+    },
+    "art": {
+      "source": "inat",
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/707055279/large.jpg",
+      "page": "https://www.inaturalist.org/observations/386178875",
+      "credit": "Your observation photo",
+      "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
+    },
+    "note": ""
+  },
+  {
+    "file": "2026-10-18-great-tailed-grackle-409566308.png",
+    "generated_at": "2026-11-26T00:32:47+00:00",
     "bytes": 5368,
     "observation": {
       "id": 409566308,
@@ -26,8 +101,8 @@
     "note": ""
   },
   {
-    "file": "2026-11-25-brown-pelican-409565054.png",
-    "generated_at": "2026-11-25T23:59:19+00:00",
+    "file": "2026-10-18-brown-pelican-409565054.png",
+    "generated_at": "2026-11-26T00:32:46+00:00",
     "bytes": 12380,
     "observation": {
       "id": 409565054,
@@ -55,9 +130,9 @@
     "note": ""
   },
   {
-    "file": "2026-11-25-western-pygmy-blue-409563850.png",
-    "generated_at": "2026-11-25T23:59:18+00:00",
-    "bytes": 3396,
+    "file": "2026-10-18-western-pygmy-blue-409563850.png",
+    "generated_at": "2026-11-26T00:32:46+00:00",
+    "bytes": 15497,
     "observation": {
       "id": 409563850,
       "observed_on": "2026-10-18",
@@ -68,14 +143,20 @@
       "id": 53843,
       "name": "Brephidium exilis",
       "common_name": "Western Pygmy-Blue",
-      "matched_id": null
+      "matched_id": 53843
     },
-    "art": null,
+    "art": {
+      "source": "inat",
+      "url": "https://inaturalist-open-data.s3.amazonaws.com/photos/753078523/large.jpg",
+      "page": "https://www.inaturalist.org/observations/409563850",
+      "credit": "Your observation photo",
+      "artist": "(c) dmcwo, some rights reserved (CC BY-NC)"
+    },
     "note": ""
   },
   {
-    "file": "2026-11-25-song-sparrow-409562953.png",
-    "generated_at": "2026-11-25T23:59:16+00:00",
+    "file": "2026-10-18-song-sparrow-409562953.png",
+    "generated_at": "2026-11-26T00:32:42+00:00",
     "bytes": 11042,
     "observation": {
       "id": 409562953,
@@ -102,8 +183,8 @@
     "note": ""
   },
   {
-    "file": "2026-11-25-snowy-egret-409563566.png",
-    "generated_at": "2026-11-25T23:59:16+00:00",
+    "file": "2026-10-18-snowy-egret-409563566.png",
+    "generated_at": "2026-11-26T00:32:42+00:00",
     "bytes": 16344,
     "observation": {
       "id": 409563566,
@@ -127,6 +208,60 @@
       "license": "Public domain",
       "wikidata": "Q59785",
       "rotate": 90
+    },
+    "note": ""
+  },
+  {
+    "file": "2026-10-18-song-sparrow-409563344.png",
+    "generated_at": "2026-11-26T00:24:40+00:00",
+    "bytes": 11042,
+    "observation": {
+      "id": 409563344,
+      "observed_on": "2026-10-18",
+      "place_guess": "Point Loma, San Diego, CA, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 9100,
+      "name": "Melospiza melodia",
+      "common_name": "Song Sparrow",
+      "matched_id": 9100
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/The_birds_of_America_%28Pl._189%29_%288571226515%29.jpg/1280px-The_birds_of_America_%28Pl._189%29_%288571226515%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:The_birds_of_America_(Pl._189)_(8571226515).jpg",
+      "credit": "The birds of America (Pl. 189) (8571226515)",
+      "artist": "Audubon, John James; Bowen, John T.",
+      "date": "1841",
+      "license": "Public domain",
+      "wikidata": "Q842599"
+    },
+    "note": ""
+  },
+  {
+    "file": "2026-07-22-polyommatus-386178953.png",
+    "generated_at": "2026-11-26T00:24:37+00:00",
+    "bytes": 3780,
+    "observation": {
+      "id": 386178953,
+      "observed_on": "2026-07-22",
+      "place_guess": "Aulon, Occitanie, FR",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 55642,
+      "name": "Polyommatus",
+      "common_name": "Polyommatus",
+      "matched_id": 55642
+    },
+    "art": {
+      "source": "phylopic",
+      "url": "https://images.phylopic.org/images/abf654f3-a516-42c6-ba72-ba2d7a0fda77/raster/505x1536.png",
+      "page": "https://www.phylopic.org/images/abf654f3-a516-42c6-ba72-ba2d7a0fda77",
+      "credit": "Silhouette via PhyloPic",
+      "artist": "Devon Hal Draedle",
+      "license": "CC BY 4.0"
     },
     "note": ""
   }
