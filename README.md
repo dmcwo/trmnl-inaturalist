@@ -41,6 +41,7 @@ Other flags:
 - `--force`: reprocess an observation that's already in `library/` (normally skipped — see below)
 - `--review`: write `out/contact_sheet.png`, a grid of every library entry, and exit — see "Batch mode"
 - `--skip <observation-id>` / `--unskip <observation-id>`: mark or unmark an entry to stay in `library/` but be left out of device rotation, and exit
+- `--reset {library,all}`: start over. `library` clears `library/` (archived files + `index.json`) so `--new`/`--curate` treat everything as unreviewed again, but keeps `cache.json`'s curated species picks, so species you've already vetted show up as the cached default again instead of needing a fresh decision. `all` also clears `cache.json`, for a genuinely blank slate. Either way, `.api_cache.json` (just a lookup performance cache, not curated content) is left alone - nothing is lost by keeping it. Asks you to confirm before deleting anything, then exits.
 
 Each run adds a file to `library/`, the published archive:
 - `library/<observed-date>-<common-name>-<observation-id>.png`: that observation's 800x480, 2-bit file (must stay under 90,000 bytes). One file per observation — the filename is the observation's own date and id, not the date you happened to run the script, so it's a stable record of that sighting and re-running over the same observations is a no-op (skipped, not duplicated; pass `--force` to redo one on purpose).

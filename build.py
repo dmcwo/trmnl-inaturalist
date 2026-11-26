@@ -512,6 +512,12 @@ def main():
                      help="with --new/--curate, fetch every matching observation "
                           "(paginated) instead of capping at 200 - for a one-time "
                           "full-collection pass")
+    ap.add_argument("--reset", choices=["library", "all"], metavar="{library,all}",
+                     help="library: clear library/ (archived files + index.json) to "
+                          "re-review everything, keeping cache.json's curated species "
+                          "picks; all: also clear cache.json, for a truly blank slate. "
+                          "Either way .api_cache.json (just a lookup performance cache) "
+                          "is left alone. Asks to confirm, then exits.")
     args = ap.parse_args()
     if args.seed is not None:
         random.seed(args.seed)
@@ -525,6 +531,8 @@ def main():
                                   skip=args.skip is not None)
     if args.curate:
         return run_curate(args)
+    if args.reset:
+        return run_reset(args.reset)
 
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
     OUT_DIR.mkdir(exist_ok=True)
@@ -633,6 +641,31 @@ def write_contact_sheet():
     out_path = OUT_DIR / "contact_sheet.png"
     sheet.save(out_path)
     print(f"Wrote {out_path} ({len(entries)} entries, {cols} per row)")
+
+
+def run_reset(scope):
+    """Clear library/ (archived files + index.json) to re-review everything from
+    scratch. scope="all" also clears cache.json; either way .api_cache.json (a lookup
+    performance cache, not curated content) is left alone - nothing is lost by keeping
+    it, and repopulating it from scratch would just be slower for no benefit."""
+    pngs = sorted(p for p in LIBRARY_DIR.glob("*.png") if p.name != "latest.png")
+    print(f"This will delete {len(pngs)} file(s) in library/ and reset index.json.")
+    if scope == "all":
+        print("It will also clear cache.json (your curated species picks).")
+    print("(.api_cache.json, the lookup performance cache, is left alone either way.)")
+    if input("Type 'yes' to confirm: ").strip().lower() != "yes":
+        print("Not confirmed; nothing changed.")
+        return
+    for p in pngs:
+        p.unlink()
+    latest = LIBRARY_DIR / "latest.png"
+    if latest.exists():
+        latest.unlink()
+    LIBRARY_INDEX.write_text("[]")
+    if scope == "all":
+        CACHE_PATH.write_text("{}")
+    print(f"Cleared library/ ({len(pngs)} file(s) removed)."
+          + (" Cleared cache.json too." if scope == "all" else " cache.json left as-is."))
 
 
 def set_skip_rotation(obs_id, skip):
