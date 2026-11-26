@@ -73,6 +73,18 @@ def pick_observation(user=None, lat=None, lng=None, radius=None, days=30):
     return random.choice(results)
 
 
+def pick_recent(user, count):
+    """Return the `count` most recent observations for a user, newest first, no randomness
+    (unlike pick_observation, which samples one at random from a wider recent pool)."""
+    params = {"user_login": user, "per_page": count, "order": "desc", "order_by": "observed_on",
+              "photos": "true", "rank": "species,subspecies,genus"}
+    data = http_json("https://api.inaturalist.org/v1/observations", params)
+    results = [o for o in data.get("results", []) if o.get("taxon")]
+    if not results:
+        sys.exit("No observations returned.")
+    return results
+
+
 def taxon_chain(obs):
     """Taxon IDs to try, most specific first: the taxon, then ancestors up to family."""
     t = obs["taxon"]
@@ -204,6 +216,11 @@ def to_four_gray(img, box, paper_cut=0.40, ink_cut=0.02, dither=True):
     this percentile is treated as paper and becomes pure white. Raise it (0.6-0.8) for
     densely shaded plates or paintings; lower it for sparse line drawings.
     Ordered dither compresses far better than Floyd-Steinberg, which matters for 90 KB."""
+    if img.mode in ("RGBA", "LA") or (img.mode == "P" and "transparency" in img.info):
+        # PhyloPic silhouettes are black-on-transparent; dropping alpha straight to
+        # grayscale reads the hidden black RGB and paints the whole box solid black.
+        bg = Image.new("RGBA", img.size, (255, 255, 255, 255))
+        img = Image.alpha_composite(bg, img.convert("RGBA")).convert("RGB")
     g = ImageOps.grayscale(img)
     g = g.filter(ImageFilter.MedianFilter(3))   # kill paper grain at full res, before
     g = ImageOps.contain(g, box, Image.LANCZOS)  # downscaling, so fine hatching survives
@@ -332,6 +349,10 @@ def main():
     ap.add_argument("--fixture", help="local observation JSON (skips the iNat API)")
     ap.add_argument("--art", help="local image to use as the plate (skips art lookup)")
     ap.add_argument("--seed", type=int)
+    ap.add_argument("--rotate", type=int, choices=[0, 90, 180, 270],
+                     help="rotate the plate clockwise before processing; overrides cache.json")
+    ap.add_argument("--count", type=int, default=1,
+                     help="process this many of the most recent observations in one run (--user only)")
     args = ap.parse_args()
     if args.seed is not None:
         random.seed(args.seed)
@@ -341,11 +362,25 @@ def main():
     LIBRARY_DIR.mkdir(exist_ok=True)
 
     if args.fixture:
-        obs = json.loads(Path(args.fixture).read_text())
+        observations = [json.loads(Path(args.fixture).read_text())]
+    elif args.count > 1:
+        if not args.user:
+            sys.exit("--count requires --user.")
+        observations = pick_recent(args.user, args.count)
     elif args.user or args.lat is not None:
-        obs = pick_observation(args.user, args.lat, args.lng, args.radius)
+        observations = [pick_observation(args.user, args.lat, args.lng, args.radius)]
     else:
         sys.exit("Give --user, --lat/--lng, or --fixture.")
+
+    # Process oldest-to-newest so index.json ends up newest-first: each run inserts
+    # at position 0, so processing newest last puts it on top.
+    for obs in reversed(observations):
+        process_observation(obs, cache, args)
+
+    CACHE_PATH.write_text(json.dumps(cache, indent=2))
+
+
+def process_observation(obs, cache, args):
     print(f"Observation: {obs['taxon'].get('preferred_common_name')} ({obs['taxon']['name']})")
 
     if args.art:
@@ -358,6 +393,14 @@ def main():
     if art and matched and matched != obs["taxon"]["id"]:
         note = "Plate shows a related taxon (matched higher in the tree)"
     print(f"Art: {art.get('source') if art else 'none'}  {art.get('page', '') if art else ''}")
+
+    # Large folio plate scans (Audubon/BHL in particular) are often stored sideways,
+    # with no EXIF flag to detect it automatically. --rotate lets you check a fix while
+    # triaging; once confirmed, save it as "rotate" on the cache.json entry so it sticks.
+    rotate = args.rotate if args.rotate is not None else ((art or {}).get("rotate") or 0)
+    if raw is not None and rotate:
+        raw = raw.transpose({90: Image.Transpose.ROTATE_270, 180: Image.Transpose.ROTATE_180,
+                              270: Image.Transpose.ROTATE_90}[rotate])
 
     art_img = to_four_gray(raw, (ART_W - 30, H - 40)) if raw is not None else None
     screen = compose(obs, art, art_img, note)
@@ -406,8 +449,6 @@ def main():
         "note": note,
     })
     LIBRARY_INDEX.write_text(json.dumps(entries, indent=2))
-
-    CACHE_PATH.write_text(json.dumps(cache, indent=2))
 
 
 if __name__ == "__main__":

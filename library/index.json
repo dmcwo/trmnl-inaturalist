@@ -1,0 +1,133 @@
+[
+  {
+    "file": "2026-11-25-great-tailed-grackle-409566308.png",
+    "generated_at": "2026-11-25T23:59:19+00:00",
+    "bytes": 5368,
+    "observation": {
+      "id": 409566308,
+      "observed_on": "2026-10-18",
+      "place_guess": "North City, San Diego, CA, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 9607,
+      "name": "Quiscalus mexicanus",
+      "common_name": "Great-tailed Grackle",
+      "matched_id": 9607
+    },
+    "art": {
+      "source": "phylopic",
+      "url": "https://images.phylopic.org/images/be6f4ddf-d1ae-4cfd-bc67-0fd1a10413ea/raster/1536x877.png",
+      "page": "https://www.phylopic.org/images/be6f4ddf-d1ae-4cfd-bc67-0fd1a10413ea",
+      "credit": "Silhouette via PhyloPic",
+      "artist": "Andy Wilson",
+      "license": "CC0"
+    },
+    "note": ""
+  },
+  {
+    "file": "2026-11-25-brown-pelican-409565054.png",
+    "generated_at": "2026-11-25T23:59:19+00:00",
+    "bytes": 12380,
+    "observation": {
+      "id": 409565054,
+      "observed_on": "2026-10-18",
+      "place_guess": "Point Loma, San Diego, CA, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 4328,
+      "name": "Pelecanus occidentalis",
+      "common_name": "Brown Pelican",
+      "matched_id": 4328
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/The_birds_of_America_%28Pl._423%29_%288594198851%29.jpg/1280px-The_birds_of_America_%28Pl._423%29_%288594198851%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:The_birds_of_America_(Pl._423)_(8594198851).jpg",
+      "credit": "The birds of America (Pl. 423) (8594198851)",
+      "artist": "Audubon, John James; Bowen, John T.",
+      "date": "1844",
+      "license": "Public domain",
+      "wikidata": "Q208714",
+      "rotate": 90
+    },
+    "note": ""
+  },
+  {
+    "file": "2026-11-25-western-pygmy-blue-409563850.png",
+    "generated_at": "2026-11-25T23:59:18+00:00",
+    "bytes": 3396,
+    "observation": {
+      "id": 409563850,
+      "observed_on": "2026-10-18",
+      "place_guess": "Point Loma, San Diego, CA, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 53843,
+      "name": "Brephidium exilis",
+      "common_name": "Western Pygmy-Blue",
+      "matched_id": null
+    },
+    "art": null,
+    "note": ""
+  },
+  {
+    "file": "2026-11-25-song-sparrow-409562953.png",
+    "generated_at": "2026-11-25T23:59:16+00:00",
+    "bytes": 11042,
+    "observation": {
+      "id": 409562953,
+      "observed_on": "2026-10-18",
+      "place_guess": "Point Loma, San Diego, CA, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 9100,
+      "name": "Melospiza melodia",
+      "common_name": "Song Sparrow",
+      "matched_id": 9100
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bb/The_birds_of_America_%28Pl._189%29_%288571226515%29.jpg/1280px-The_birds_of_America_%28Pl._189%29_%288571226515%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:The_birds_of_America_(Pl._189)_(8571226515).jpg",
+      "credit": "The birds of America (Pl. 189) (8571226515)",
+      "artist": "Audubon, John James; Bowen, John T.",
+      "date": "1841",
+      "license": "Public domain",
+      "wikidata": "Q842599"
+    },
+    "note": ""
+  },
+  {
+    "file": "2026-11-25-snowy-egret-409563566.png",
+    "generated_at": "2026-11-25T23:59:16+00:00",
+    "bytes": 16344,
+    "observation": {
+      "id": 409563566,
+      "observed_on": "2026-10-18",
+      "place_guess": "Point Loma, San Diego, CA, USA",
+      "observer": "dmcwo"
+    },
+    "taxon": {
+      "id": 4940,
+      "name": "Egretta thula",
+      "common_name": "Snowy Egret",
+      "matched_id": 4940
+    },
+    "art": {
+      "source": "commons",
+      "url": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/69/The_birds_of_America_%28Pl._374%29_%288592728280%29.jpg/1280px-The_birds_of_America_%28Pl._374%29_%288592728280%29.jpg?utm_source=commons.wikimedia.org&utm_campaign=imageinfo&utm_content=thumbnail",
+      "page": "https://commons.wikimedia.org/wiki/File:The_birds_of_America_(Pl._374)_(8592728280).jpg",
+      "credit": "The birds of America (Pl. 374) (8592728280)",
+      "artist": "Audubon, John James; Bowen, John T.",
+      "date": "1843",
+      "license": "Public domain",
+      "wikidata": "Q59785",
+      "rotate": 90
+    },
+    "note": ""
+  }
+]
