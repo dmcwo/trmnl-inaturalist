@@ -117,7 +117,7 @@ The real repeat-call cost was Wikidata/Commons/PhyloPic during `--curate`'s "gat
 
 ## Fonts
 
-Put `regular.ttf`, `bold.ttf`, and `italic.ttf` in `fonts/`. The bundled files are DejaVu Serif as a placeholder; swap in any OFL-licensed serif you like.
+Put `regular.ttf`, `bold.ttf`, and `italic.ttf` in `fonts/`. The bundled files are [Libre Baskerville](https://github.com/impallari/Libre-Baskerville) (OFL-licensed); swap in any OFL-licensed serif you like.
 
 ## Lookup order
 
