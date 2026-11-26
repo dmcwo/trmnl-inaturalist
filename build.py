@@ -514,7 +514,9 @@ def main():
                      help="which side the plate appears on (default left); in --curate, "
                           "append l/r to your pick instead, e.g. '2r'")
     ap.add_argument("--count", type=int, default=1,
-                     help="process this many of the most recent observations in one run (--user only)")
+                     help="process (or with --curate, fetch for review) this many "
+                          "observations in one run, most recent first unless --order "
+                          "says otherwise (--user only)")
     ap.add_argument("--new", action="store_true",
                      help="process every recent observation not already in library/ - "
                           "the usual way to pick up where you left off (--user only)")
@@ -862,7 +864,7 @@ def run_curate(args):
     cache = json.loads(CACHE_PATH.read_text()) if CACHE_PATH.exists() else {}
     OUT_DIR.mkdir(exist_ok=True)
 
-    count = 100_000 if args.all else 200
+    count = 100_000 if args.all else args.count if args.count > 1 else 200
     queue = [o for o in pick_recent(args.user, count, order=args.order)
              if not (LIBRARY_DIR / library_filename(o)).exists()]
     if not queue:
