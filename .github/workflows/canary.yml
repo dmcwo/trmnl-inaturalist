@@ -1,14 +1,9 @@
-name: Canary (schedule test)
+'name': Canary (schedule test)
 
-# Diagnostic only: isolates whether GitHub's scheduler fires at all in this repo,
-# separate from anything rotate.yml does. No checkout, no dependencies, nothing to
-# break - if this doesn't fire either, the problem is GitHub's scheduler for this
-# repo/account, not our workflow config. Delete once rotate.yml is confirmed reliable.
-
-on:
+'on':
   schedule:
-    - cron: "*/10 * * * *"
-  workflow_dispatch: 
+    - cron: '7,17,27,37,47,57 * * * *'
+  workflow_dispatch:
 
 jobs:
   ping:
